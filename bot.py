@@ -62,22 +62,15 @@ async def play(_, message: Message):
 
     try:
 
-        ydl_opts = {
-    "format": "bestaudio/best",
+ydl_opts = {
+    "format": "best",
     "outtmpl": "music.%(ext)s",
     "quiet": True,
     "noplaylist": True,
     "default_search": "ytsearch1",
-            
     "cookiefile": "cookies.txt",
-            
-    "geo_bypass": True,
-    "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": "mp3",
-        "preferredquality": "192",
-    }]
-        }
+    "geo_bypass": True
+}
 
         with YoutubeDL(ydl_opts) as ydl:
 
