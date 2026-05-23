@@ -9,82 +9,97 @@ API_ID = 35140329
 API_HASH = "011f638e4acadee178c59afffc80193d"
 BOT_TOKEN = "8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw"
 
-app = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client(
+    "music_bot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
+)
 
 # Create downloads folder
-if not os.path.exists("downloads"):
-    os.makedirs("downloads")
+os.makedirs("downloads", exist_ok=True)
+
 
 @app.on_message(filters.command("start"))
 async def start_command(client, message: Message):
     await message.reply_text(
-        "🎵 *Music Bot Active!*\n\n"
-        "*Commands:*\n"
-        "`/play song_name` - Song download karo\n\n"
-        "*Example:* `/play Bala hatke`\n\n"
-        "*Live VC ke liye:* @KurumiMusicRobot use karo",
-        parse_mode="Markdown"
+        "🎵 Music Bot Active!\n\n"
+        "Command:\n"
+        "/play song name"
     )
+
 
 @app.on_message(filters.command("play"))
 async def play_command(client, message: Message):
+
     if len(message.command) < 2:
-        await message.reply_text("❌ Song name likho! Example: `/play Bala hatke`")
-        return
-    
+        return await message.reply_text(
+            "❌ Example:\n/play Alan Walker"
+        )
+
     query = " ".join(message.command[1:])
-    status = await message.reply_text(f"🎵 *Searching:* `{query}`...", parse_mode="Markdown")
-    
+
+    status = await message.reply_text(
+        f"🔍 Searching:\n{query}"
+    )
+
     try:
-        # Search YouTube
+        # Search song
         results = YoutubeSearch(query, max_results=1).to_dict()
+
         if not results:
-            await status.edit_text(f"❌ *Song nahi mila:* `{query}`", parse_mode="Markdown")
-            return
-        
+            return await status.edit_text("❌ Song not found")
+
         song = results[0]
+
+        title = song["title"]
         url = f"https://youtube.com/watch?v={song['id']}"
-        title = song['title']
-        
-        await status.edit_text(f"🎵 *Downloading:* `{title}`...", parse_mode="Markdown")
-        
-        # Download audio
+
+        await status.edit_text(f"⬇️ Downloading:\n{title}")
+
         ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
-            'quiet': True,
-            'no_warnings': True,
+            "format": "bestaudio[ext=m4a]/bestaudio/best",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
         }
-        
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-        
-        # Send audio
-        await status.delete()
+            file_path = ydl.prepare_filename(info)
+
+        # Check file exists
+        if not os.path.exists(file_path):
+            return await status.edit_text("❌ Download failed")
+
+        await status.edit_text("📤 Uploading audio...")
+
         await message.reply_audio(
-            filename,
+            audio=file_path,
             title=title,
-            performer="YouTube",
-            caption=f"🎵 *{title}*"
+            performer="YouTube Music",
+            caption=f"🎵 {title}"
         )
-        
-        # Delete file after sending
+
+        await status.delete()
+
+        # Delete file
         try:
-            os.remove(filename)
+            os.remove(file_path)
         except:
             pass
-            
+
     except Exception as e:
-        await status.edit_text(f"❌ *Error:* {str(e)[:200]}", parse_mode="Markdown")
+        await status.edit_text(f"❌ Error:\n{str(e)}")
+
 
 async def main():
     await app.start()
-    print("="*40)
-    print("✅ MUSIC BOT IS RUNNING!")
-    print("Send /play song_name")
-    print("="*40)
+
+    print("✅ Music Bot Running")
+
     await asyncio.Event().wait()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
