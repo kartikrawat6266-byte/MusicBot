@@ -103,16 +103,22 @@ async def play(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "cookiefile": None,
-            "retries": 15,
-            "sleep_interval": 1,
-            "sleep_interval_requests": 1,
+
+            "retries": 10,
+            "fragment_retries": 10,
+            "sleep_interval_requests": 2,
+            "extractor_retries": 10,
+            "file_access_retries": 10,
+
             "http_headers": {
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent": "com.google.android.youtube/17.36.4 (Linux; U; Android 11)",
+                "Accept-Language": "en-US,en;q=0.9"
             },
+
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android", "web", "ios"]
+                    "player_client": ["android"],
+                    "player_skip": ["webpage", "configs"],
                 }
             }
         }
@@ -220,16 +226,22 @@ async def video(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "cookiefile": None,
-            "retries": 15,
-            "sleep_interval": 1,
-            "sleep_interval_requests": 1,
+
+            "retries": 10,
+            "fragment_retries": 10,
+            "sleep_interval_requests": 2,
+            "extractor_retries": 10,
+            "file_access_retries": 10,
+
             "http_headers": {
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent": "com.google.android.youtube/17.36.4 (Linux; U; Android 11)",
+                "Accept-Language": "en-US,en;q=0.9"
             },
+
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android", "web", "ios"]
+                    "player_client": ["android"],
+                    "player_skip": ["webpage", "configs"],
                 }
             }
         }
