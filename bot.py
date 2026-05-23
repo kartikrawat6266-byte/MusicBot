@@ -63,12 +63,17 @@ async def play(_, message: Message):
     try:
 
         ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": "music.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "default_search": "ytsearch1",
-            "geo_bypass": True
+    "format": "bestaudio/best",
+    "outtmpl": "music.%(ext)s",
+    "quiet": True,
+    "noplaylist": True,
+    "default_search": "ytsearch1",
+    "geo_bypass": True,
+    "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "192",
+    }]
         }
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -79,7 +84,7 @@ async def play(_, message: Message):
                 info = info["entries"][0]
 
             title = info["title"]
-            file_path = ydl.prepare_filename(info)
+            file_path = "music.mp3"
 
         ping = round((time.time() - start_time) * 1000)
 
