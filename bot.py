@@ -1,7 +1,7 @@
 import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from youtube_search import YoutubeSearch
+from youtubesearchpython import VideosSearch
 import yt_dlp
 
 API_ID = 35140329
