@@ -4,23 +4,20 @@ from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
-    MessageHandler,
-    filters,
     ContextTypes,
 )
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("8937999210:AAFMY6svP5Nc6k0stAt-HcFE0LcHOwlobAM")
 
 # START COMMAND
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🎵 Music Bot Online!\n\n"
-        "Commands:\n"
-        "/song song name"
+        "Use:\n/song song name"
     )
 
 # SONG COMMAND
-async def song_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def song(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not context.args:
         await update.message.reply_text(
@@ -43,6 +40,7 @@ async def song_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
             info = ydl.extract_info(
                 f"ytsearch1:{query}",
                 download=True
@@ -70,9 +68,9 @@ async def song_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # APP
 app = Application.builder().token(BOT_TOKEN).build()
 
-# HANDLERS
+# COMMANDS
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("song", song_command))
+app.add_handler(CommandHandler("song", song))
 
 print("✅ Music Bot Started")
 
