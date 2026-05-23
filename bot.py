@@ -1,128 +1,114 @@
+import asyncio
 import os
 import time
-import yt_dlp
-
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from youtubesearchpython import VideosSearch
 import yt_dlp
 
-API_ID = 35140329
-API_HASH = "011f638e4acadee178c59afffc80193d"
-BOT_TOKEN = "8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw"
+API_ID = int(os.getenv("35140329"))
+API_HASH = os.getenv("011f638e4acadee178c59afffc80193d")
+BOT_TOKEN = os.getenv("8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw")
 
-app = Client(
-    "music_bot",
+bot = Client(
+    "MusicBot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
 )
 
-os.makedirs("downloads", exist_ok=True)
-
-
-@app.on_message(filters.command("start"))
-async def start(client, message: Message):
-
+# START COMMAND
+@bot.on_message(filters.command("start"))
+async def start(_, message: Message):
     await message.reply_text(
-        "🎵 Music Bot Active!\n\n"
-        "Use:\n"
-        "/play song name"
+        f"""
+🎵 **Premium Music Bot Active!**
+
+✨ Fast Download
+⚡ Ultra Speed
+📥 HQ Audio
+🏓 Ping System
+👑 Owner: @BeStChEaT_OwNeR
+
+💡 Usage:
+/play song name
+
+📌 Example:
+/play Golden Brown
+"""
     )
 
-
-@app.on_message(filters.command("play"))
-async def play(client, message: Message):
+# PLAY COMMAND
+@bot.on_message(filters.command("play"))
+async def play(_, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n/play Golden Brown"
+            "❌ Example:\n`/play Golden Brown`"
         )
 
     query = " ".join(message.command[1:])
 
-    start_time = time.time()
-
     msg = await message.reply_text(
-        f"""
-🔍 Searching...
-
-🎵 {query}
-"""
+        f"🔍 Searching:\n`{query}`"
     )
 
+    start_time = time.time()
+
     try:
+        # SEARCH SONG
+        search = VideosSearch(query, limit=1)
+        result = search.result()["result"][0]
 
-        ydl_opts = {
-            "format": "bestaudio",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "default_search": "ytsearch1",
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-
-            info = ydl.extract_info(query, download=True)
-
-            if "entries" in info:
-                info = info["entries"][0]
-
-            title = info.get("title", "Unknown")
-            duration = info.get("duration_string", "Unknown")
-
-            file_path = ydl.prepare_filename(info)
-
-        if not os.path.exists(file_path):
-            return await msg.edit_text(
-                "❌ Download failed"
-            )
+        title = result["title"]
+        url = result["link"]
 
         await msg.edit_text(
             f"""
-📤 Uploading...
+🎧 Found Song
 
-🎵 {title}
-
-💎 Premium Quality
+🏷 Name: {title}
+📥 Downloading...
 """
         )
+
+        # DOWNLOAD OPTIONS
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": "music.%(ext)s",
+            "noplaylist": True,
+            "quiet": True,
+            "cookiefile": "cookies.txt"
+        }
+
+        # DOWNLOAD SONG
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            file_path = ydl.prepare_filename(info)
 
         ping = round((time.time() - start_time) * 1000)
 
+        # SEND AUDIO
         await message.reply_audio(
             audio=file_path,
             title=title,
-            performer="Premium Music",
             caption=f"""
-✨━━━━━━━━━━━━━━━━━━✨
-🎵 {title}
-✨━━━━━━━━━━━━━━━━━━✨
+🎵 Download Complete
 
-⏱ Duration: {duration}
-
+🏷 Song: {title}
 ⚡ Ping: {ping} ms
-🚀 Status: Online
-💎 Quality: High
-
-👑 Owner: @BeStChEaT_OwNeR
+👑 Powered By: @BeStChEaT_OwNeR
 """
         )
 
+        # DELETE FILE
+        os.remove(file_path)
+
         await msg.delete()
 
-        try:
-            os.remove(file_path)
-        except:
-            pass
-
     except Exception as e:
+        await msg.edit_text(f"❌ Error:\n`{e}`")
 
-        await msg.edit_text(
-            f"❌ Error:\n{e}"
-        )
+print("🎵 Music Bot Started!")
 
-
-print("✅ Music Bot Running")
-
-app.run()
+bot.run()
