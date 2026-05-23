@@ -1,124 +1,101 @@
 import os
-import time
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from yt_dlp import YoutubeDL
+from youtube_search import YoutubeSearch
+import yt_dlp
 
-# VARIABLES
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_ID = 35140329
+API_HASH = "011f638e4acadee178c59afffc80193d"
+BOT_TOKEN = "8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw"
 
-# BOT CLIENT
-bot = Client(
-    "MusicBot",
+app = Client(
+    "music_bot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
 )
 
-# START COMMAND
-@bot.on_message(filters.command("start"))
-async def start(_, message: Message):
+os.makedirs("downloads", exist_ok=True)
+
+
+@app.on_message(filters.command("start"))
+async def start(client, message: Message):
 
     await message.reply_text(
-        """
-🎵 Premium Music Bot Active!
-
-━━━━━━━━━━━━━━
-⚡ Ultra Fast Download
-🎧 HQ Music
-📥 Instant Audio
-🏓 Live Ping
-👑 Owner:
-@BeStChEaT_OwNeR
-━━━━━━━━━━━━━━
-
-💡 Commands:
-
-/play song name
-
-📌 Example:
-/play Golden Brown
-"""
+        "🎵 Music Bot Active!\n\n"
+        "Use:\n"
+        "/play song name"
     )
 
-# PLAY COMMAND
-@bot.on_message(filters.command("play"))
-async def play(_, message: Message):
+
+@app.on_message(filters.command("play"))
+async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n/play Golden Brown"
+            "❌ Example:\n/play Alan Walker"
         )
 
     query = " ".join(message.command[1:])
 
-    searching = await message.reply_text(
-        f"🔍 Searching:\n`{query}`"
+    msg = await message.reply_text(
+        f"🔍 Searching:\n{query}"
     )
 
-    start_time = time.time()
-
     try:
+
+        results = YoutubeSearch(query, max_results=1).to_dict()
+
+        if not results:
+            return await msg.edit_text("❌ Song not found")
+
+        song = results[0]
+
+        title = song["title"]
+
+        url = f"https://youtube.com/watch?v={song['id']}"
+
+        await msg.edit_text(f"⬇️ Downloading:\n{title}")
+
         ydl_opts = {
-            "format": None,
-            "outtmpl": "%(title)s.%(ext)s",
+            "format": "bestaudio",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
-            "default_search": "ytsearch1",
-            "cookiefile": "cookies.txt",
-            "geo_bypass": True,
-            "extract_flat": False,
-            "nocheckcertificate": True,
-            "ignoreerrors": False,
-            "youtube_include_dash_manifest": False,
-            "youtube_include_hls_manifest": False,
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }]
         }
 
-        with YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            info = ydl.extract_info(query, download=True)
+            info = ydl.extract_info(url, download=True)
 
-            if "entries" in info:
-                info = info["entries"][0]
+            file_path = ydl.prepare_filename(info)
 
-            title = info["title"]
-            file_path = f"{title}.mp3"
+        if not os.path.exists(file_path):
+            return await msg.edit_text("❌ Download failed")
 
-            ping = round((time.time() - start_time) * 1000)
+        await msg.edit_text("📤 Uploading...")
 
-            await message.reply_audio(
-                audio=file_path,
-                title=title,
-                caption=f"""
-🎵 Download Complete
+        await message.reply_audio(
+            audio=file_path,
+            title=title,
+            performer="YouTube",
+            caption=f"🎵 {title}"
+        )
 
-━━━━━━━━━━━━━━
-🏷 Song:
-{title}
+        await msg.delete()
 
-⚡ Ping:
-{ping} ms
-
-👑 Owner:
-@BeStChEaT_OwNeR
-━━━━━━━━━━━━━━
-"""
-            )
-
+        try:
             os.remove(file_path)
-
-            await searching.delete()
+        except:
+            pass
 
     except Exception as e:
-        await searching.edit(f"❌ Error:\n{e}")
 
-print("🎵 Music Bot Started!")
+        await msg.edit_text(
+            f"❌ Error:\n{e}"
+        )
 
-bot.run()
+
+print("✅ Music Bot Running")
+
+app.run()
