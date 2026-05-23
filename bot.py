@@ -95,14 +95,20 @@ async def play(client, message: Message):
         )
 
         ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "cookiefile": "cookies.txt",
-            "geo_bypass": True,
-            "nocheckcertificate": True
-        }
+    "format": "bestaudio[ext=m4a]/bestaudio/best",
+    "outtmpl": "downloads/%(title)s.%(ext)s",
+    "quiet": True,
+    "noplaylist": True,
+    "geo_bypass": True,
+    "nocheckcertificate": True,
+    "extractaudio": True,
+    "audioformat": "mp3",
+    "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "320",
+    }]
+}
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -184,14 +190,14 @@ async def video(client, message: Message):
             f"⬇️ Downloading Video...\n\n🎬 {title}"
         )
 
-        ydl_opts = {
-            "format": "mp4",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "cookiefile": "cookies.txt",
-            "geo_bypass": True,
-            "nocheckcertificate": True
+ydl_opts = {
+    "format": "best[ext=mp4]/best",
+    "outtmpl": "downloads/%(title)s.%(ext)s",
+    "quiet": True,
+    "noplaylist": True,
+    "geo_bypass": True,
+    "nocheckcertificate": True
+}
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
