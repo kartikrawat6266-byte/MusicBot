@@ -62,24 +62,22 @@ async def play(_, message: Message):
 
     try:
         ydl_opts = {
-    "format": "140/bestaudio/best",
-    "outtmpl": "music.%(ext)s",
-    "quiet": True,
-    "noplaylist": True,
-    "default_search": "ytsearch1",
-    "cookiefile": "cookies.txt",
-    "geo_bypass": True,
-    "extractor_args": {
-        "youtube": {
-            "player_client": ["android"]
+            "format": "bestaudio",
+            "outtmpl": "%(title)s.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "default_search": "ytsearch1",
+            "cookiefile": "cookies.txt",
+            "geo_bypass": True,
+            "extract_flat": False,
+            "nocheckcertificate": True,
+            "ignoreerrors": False,
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
         }
-    },
-    "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": "mp3",
-        "preferredquality": "192",
-    }]
-}
 
         with YoutubeDL(ydl_opts) as ydl:
 
@@ -89,8 +87,7 @@ async def play(_, message: Message):
                 info = info["entries"][0]
 
             title = info["title"]
-
-            file_path = "music.mp3"
+            file_path = f"{title}.mp3"
 
             ping = round((time.time() - start_time) * 1000)
 
@@ -113,15 +110,12 @@ async def play(_, message: Message):
 """
             )
 
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            os.remove(file_path)
 
             await searching.delete()
 
     except Exception as e:
-        await searching.edit(
-            f"❌ Error:\n{e}"
-        )
+        await searching.edit(f"❌ Error:\n{e}")
 
 print("🎵 Music Bot Started!")
 
