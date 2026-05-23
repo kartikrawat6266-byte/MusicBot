@@ -58,17 +58,22 @@ async def play(_, message: Message):
         f"🔍 Searching:\n`{query}`"
     )
 
-    start_time = time.time() 
+    start_time = time.time()
 
-try:
+    try:
         ydl_opts = {
-            "format": "best",
+            "format": "bestaudio/best",
             "outtmpl": "music.%(ext)s",
             "quiet": True,
             "noplaylist": True,
             "default_search": "ytsearch1",
             "cookiefile": "cookies.txt",
-            "geo_bypass": True
+            "geo_bypass": True,
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
         }
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -79,7 +84,8 @@ try:
                 info = info["entries"][0]
 
             title = info["title"]
-            file_path = ydl.prepare_filename(info)
+
+            file_path = "music.mp3"
 
             ping = round((time.time() - start_time) * 1000)
 
@@ -102,12 +108,15 @@ try:
 """
             )
 
-            os.remove(file_path)
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
             await searching.delete()
 
     except Exception as e:
-        await searching.edit(f"❌ Error:\n{e}")
+        await searching.edit(
+            f"❌ Error:\n{e}"
+        )
 
 print("🎵 Music Bot Started!")
 
