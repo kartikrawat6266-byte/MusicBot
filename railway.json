@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "apt-get update && apt-get install -y ffmpeg && python bot.py",
+    "startCommand": "pip install yt-dlp aiohttp python-telegram-bot && python bot.py",
     "restartPolicyType": "ON_FAILURE"
   }
 }
