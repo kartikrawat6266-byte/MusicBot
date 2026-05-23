@@ -5,55 +5,71 @@ from pyrogram.types import Message
 from youtube_search import YoutubeSearch
 import yt_dlp
 
-# ENV VARIABLES
+#━━━━━━━━━━━━━━━━━━━#
+# VARIABLES
+#━━━━━━━━━━━━━━━━━━━#
+
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+#━━━━━━━━━━━━━━━━━━━#
 # BOT CLIENT
+#━━━━━━━━━━━━━━━━━━━#
+
 app = Client(
-    "music_bot",
+    "PremiumMusicBot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
 )
 
-# DOWNLOAD FOLDER
+#━━━━━━━━━━━━━━━━━━━#
+# FOLDERS
+#━━━━━━━━━━━━━━━━━━━#
+
 os.makedirs("downloads", exist_ok=True)
 
-
+#━━━━━━━━━━━━━━━━━━━#
 # START COMMAND
+#━━━━━━━━━━━━━━━━━━━#
+
 @app.on_message(filters.command("start"))
 async def start(client, message: Message):
 
-    await message.reply_text(
-        """
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧 𝗔𝗖𝗧𝗜𝗩𝗘
+    text = """
+🎧 𝗨𝗟𝗧𝗥𝗔 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
 
 ━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝟯𝟮𝟬𝗞𝗕𝗣𝗦 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
-📡 𝟮𝟰/𝟳 𝗔𝗖𝗧𝗜𝗩𝗘
-🏓 𝗟𝗢𝗪 𝗣𝗜𝗡𝗚 𝗦𝗬𝗦𝗧𝗘𝗠
+⚡ Ultra Fast Download
+🚀 High Speed Server
+🎵 HQ Music 320KBPS
+📹 HD Video Download
+📡 24/7 Online
+🏓 Low Ping System
 ━━━━━━━━━━━━━━━━━━━
 
-💡 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦:
+💡 COMMANDS
 
-/play song name
+🎵 /play song name
+📹 /video song name
 
-📌 𝗘𝗫𝗔𝗠𝗣𝗟𝗘:
+📌 EXAMPLES
+
 /play Alan Walker
+/video Alan Walker
 
-👑 𝗢𝗪𝗡𝗘𝗥:
+👑 OWNER
 @BeStChEaT_OwNeR
 ━━━━━━━━━━━━━━━━━━━
 """
-    )
 
+    await message.reply_text(text)
 
-# PLAY COMMAND
+#━━━━━━━━━━━━━━━━━━━#
+# PLAY AUDIO
+#━━━━━━━━━━━━━━━━━━━#
+
 @app.on_message(filters.command("play"))
 async def play(client, message: Message):
 
@@ -91,11 +107,11 @@ async def play(client, message: Message):
 
         await msg.edit_text(
             f"""
-⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚
+⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚 𝗔𝗨𝗗𝗜𝗢
 
 🎵 {title}
 
-⚡ Ultra Fast Server...
+⚡ Ultra Fast Speed...
 """
         )
 
@@ -105,8 +121,7 @@ async def play(client, message: Message):
             "quiet": True,
             "noplaylist": True,
             "geo_bypass": True,
-            "nocheckcertificate": True,
-            "cookiefile": None
+            "nocheckcertificate": True
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -115,50 +130,28 @@ async def play(client, message: Message):
 
             file_path = ydl.prepare_filename(info)
 
-        if not os.path.exists(file_path):
-            return await msg.edit_text("❌ Download failed")
-
         ping = round((time.time() - start_time) * 1000)
-
-        await msg.edit_text(
-            f"""
-📤 𝗨𝗣𝗟𝗢𝗔𝗗𝗜𝗡𝗚
-
-🎵 {title}
-
-⚡ Speed: Ultra Fast
-"""
-        )
 
         await message.reply_audio(
             audio=file_path,
             title=title,
             performer="Premium Music",
             caption=f"""
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
+🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖
 
 ━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 𝟯𝟮𝟬𝗞𝗕𝗣𝗦
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
-📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
-━━━━━━━━━━━━━━━━━━━
-
-🏷 𝗦𝗢𝗡𝗚:
+🏷 SONG:
 {title}
 
-⚡ 𝗦𝗣𝗘𝗘𝗗:
-𝗨𝗹𝘁𝗿𝗮 𝗙𝗮𝘀𝘁
+⚡ SPEED:
+Ultra Fast
 
-🏓 𝗣𝗜𝗡𝗚:
+🏓 PING:
 {ping} ms
 
-👑 𝗢𝗪𝗡𝗘𝗥:
+👑 OWNER:
 @BeStChEaT_OwNeR
-
 ━━━━━━━━━━━━━━━━━━━
-🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
 """
         )
 
@@ -171,11 +164,108 @@ async def play(client, message: Message):
 
     except Exception as e:
 
-        await msg.edit_text(
-            f"❌ Error:\n{e}"
+        await msg.edit_text(f"❌ Error:\n{e}")
+
+#━━━━━━━━━━━━━━━━━━━#
+# VIDEO DOWNLOAD
+#━━━━━━━━━━━━━━━━━━━#
+
+@app.on_message(filters.command("video"))
+async def video(client, message: Message):
+
+    if len(message.command) < 2:
+        return await message.reply_text(
+            "❌ Example:\n/video Alan Walker"
         )
 
+    query = " ".join(message.command[1:])
 
-print("✅ Premium Music Bot Running")
+    start_time = time.time()
+
+    msg = await message.reply_text(
+        f"""
+🔍 𝗦𝗘𝗔𝗥𝗖𝗛𝗜𝗡𝗚 𝗩𝗜𝗗𝗘𝗢
+
+📹 {query}
+
+⚡ Please Wait...
+"""
+    )
+
+    try:
+
+        results = YoutubeSearch(query, max_results=1).to_dict()
+
+        if not results:
+            return await msg.edit_text("❌ Video not found")
+
+        song = results[0]
+
+        title = song["title"]
+
+        url = f"https://youtube.com/watch?v={song['id']}"
+
+        await msg.edit_text(
+            f"""
+⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚 𝗩𝗜𝗗𝗘𝗢
+
+📹 {title}
+
+⚡ Ultra Fast Speed...
+"""
+        )
+
+        ydl_opts = {
+            "format": "mp4",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+            info = ydl.extract_info(url, download=True)
+
+            file_path = ydl.prepare_filename(info)
+
+        ping = round((time.time() - start_time) * 1000)
+
+        await message.reply_video(
+            video=file_path,
+            caption=f"""
+📹 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢
+
+━━━━━━━━━━━━━━━━━━━
+🏷 TITLE:
+{title}
+
+⚡ SPEED:
+Ultra Fast
+
+🏓 PING:
+{ping} ms
+
+👑 OWNER:
+@BeStChEaT_OwNeR
+━━━━━━━━━━━━━━━━━━━
+"""
+        )
+
+        await msg.delete()
+
+        try:
+            os.remove(file_path)
+        except:
+            pass
+
+    except Exception as e:
+
+        await msg.edit_text(f"❌ Error:\n{e}")
+
+#━━━━━━━━━━━━━━━━━━━#
+
+print("✅ Ultra Premium Music Bot Running")
 
 app.run()
