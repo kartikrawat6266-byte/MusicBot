@@ -3,22 +3,35 @@ import yt_dlp
 from telegram import Update
 from telegram.ext import (
     Application,
+    CommandHandler,
     MessageHandler,
-    ContextTypes,
     filters,
+    ContextTypes,
 )
 
-BOT_TOKEN = os.getenv("8937999210:AAFMY6svP5Nc6k0stAt-HcFE0LcHOwlobAM")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-if not BOT_TOKEN:
-    print("❌ BOT_TOKEN not found!")
-    exit()
+# START COMMAND
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🎵 Music Bot Online!\n\n"
+        "Commands:\n"
+        "/song song name"
+    )
 
-async def music_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    song_name = update.message.text
+# SONG COMMAND
+async def song_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    searching = await update.message.reply_text(
-        f"🎵 Searching:\n{song_name}"
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Usage:\n/song faded"
+        )
+        return
+
+    query = " ".join(context.args)
+
+    msg = await update.message.reply_text(
+        f"🔍 Searching:\n{query}"
     )
 
     ydl_opts = {
@@ -31,7 +44,7 @@ async def music_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(
-                f"ytsearch1:{song_name}",
+                f"ytsearch1:{query}",
                 download=True
             )
 
@@ -47,21 +60,19 @@ async def music_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         os.remove(filename)
 
-        await searching.delete()
+        await msg.delete()
 
     except Exception as e:
         await update.message.reply_text(
             f"❌ Error:\n{e}"
         )
 
+# APP
 app = Application.builder().token(BOT_TOKEN).build()
 
-app.add_handler(
-    MessageHandler(
-        filters.TEXT & ~filters.COMMAND,
-        music_handler
-    )
-)
+# HANDLERS
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("song", song_command))
 
 print("✅ Music Bot Started")
 
