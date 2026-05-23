@@ -2,8 +2,7 @@ import os
 import time
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from youtubesearchpython import VideosSearch
-import yt_dlp
+from yt_dlp import YoutubeDL
 
 # VARIABLES
 API_ID = int(os.getenv("API_ID"))
@@ -24,7 +23,7 @@ async def start(_, message: Message):
 
     await message.reply_text(
         """
-🎵 **Premium Music Bot Active!**
+🎵 Premium Music Bot Active!
 
 ━━━━━━━━━━━━━━
 ⚡ Ultra Fast Download
@@ -50,74 +49,40 @@ async def play(_, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/play Golden Brown`"
+            "❌ Example:\n/play Golden Brown"
         )
 
     query = " ".join(message.command[1:])
 
     searching = await message.reply_text(
-        f"""
-🔍 Searching Song...
-
-🎵 Query:
-`{query}`
-"""
+        f"🔍 Searching:\n`{query}`"
     )
 
     start_time = time.time()
 
     try:
-        # SEARCH VIDEO
-        search = VideosSearch(query, limit=1)
-        result = search.result()["result"][0]
 
-        title = result["title"]
-        url = result["link"]
-
-        await searching.edit_text(
-            f"""
-🎧 Song Found!
-
-🏷 Title:
-`{title}`
-
-📥 Downloading Audio...
-"""
-        )
-
-        # FILE NAME
-        file_path = "music.mp3"
-
-        # YT-DLP OPTIONS
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": "music.%(ext)s",
             "quiet": True,
             "noplaylist": True,
-            "geo_bypass": True,
-            "cookiefile": "cookies.txt",
-            "postprocessors": [
-                {
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192",
-                }
-            ],
+            "default_search": "ytsearch1",
+            "geo_bypass": True
         }
 
-        # DOWNLOAD AUDIO
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+        with YoutubeDL(ydl_opts) as ydl:
 
-        # FIND MP3 FILE
-        for file in os.listdir():
-            if file.endswith(".mp3"):
-                file_path = file
-                break
+            info = ydl.extract_info(query, download=True)
+
+            if "entries" in info:
+                info = info["entries"][0]
+
+            title = info["title"]
+            file_path = ydl.prepare_filename(info)
 
         ping = round((time.time() - start_time) * 1000)
 
-        # SEND AUDIO
         await message.reply_audio(
             audio=file_path,
             title=title,
@@ -137,7 +102,6 @@ async def play(_, message: Message):
 """
         )
 
-        # DELETE FILE
         os.remove(file_path)
 
         await searching.delete()
