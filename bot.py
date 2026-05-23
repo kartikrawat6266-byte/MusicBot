@@ -1,9 +1,15 @@
+# =========================
+# IMPORTS
+# =========================
+
 import os
 import time
 import json
+
 from datetime import datetime
 
-from pyrogram import Client, filters
+from pyrogram import Client, filters, StopPropagation
+
 from pyrogram.types import (
     Message,
     InlineKeyboardMarkup,
@@ -22,7 +28,40 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-OWNER_ID = 1987818347  # <- YAHAN APNA TELEGRAM ID DALO
+OWNER_ID = 1987818347
+
+# =========================
+# FILES
+# =========================
+
+USERS_FILE = "users.json"
+BANNED_FILE = "banned.json"
+
+# =========================
+# CREATE FILES
+# =========================
+
+if not os.path.exists(USERS_FILE):
+    with open(USERS_FILE, "w") as f:
+        json.dump([], f)
+
+if not os.path.exists(BANNED_FILE):
+    with open(BANNED_FILE, "w") as f:
+        json.dump([], f)
+
+# =========================
+# LOAD SAVE
+# =========================
+
+def load_data(file):
+
+    with open(file, "r") as f:
+        return json.load(f)
+
+def save_data(file, data):
+
+    with open(file, "w") as f:
+        json.dump(data, f, indent=4)
 
 # =========================
 # BOT
@@ -37,29 +76,8 @@ app = Client(
 
 os.makedirs("downloads", exist_ok=True)
 
-USERS_FILE = "users.json"
-BANNED_FILE = "banned.json"
-
 # =========================
-# DATABASE
-# =========================
-
-def load_data(file):
-
-    if not os.path.exists(file):
-        with open(file, "w") as f:
-            json.dump([], f)
-
-    with open(file, "r") as f:
-        return json.load(f)
-
-def save_data(file, data):
-
-    with open(file, "w") as f:
-        json.dump(data, f, indent=4)
-
-# =========================
-# START
+# START TEXT
 # =========================
 
 START_TEXT = """
@@ -86,6 +104,21 @@ START_TEXT = """
 👑 𝗢𝗪𝗡𝗘𝗥:
 @BeStChEaT_OwNeR
 """
+
+# =========================
+# MAIN MENU
+# =========================
+
+MAIN_MENU = InlineKeyboardMarkup(
+    [
+        [
+            InlineKeyboardButton(
+                "👑 AuRa KaRtiK CoNtRoL 👑",
+                callback_data="owner_panel"
+            )
+        ]
+    ]
+)
 
 # =========================
 # CHECK BAN
@@ -124,10 +157,13 @@ async def start(client, message: Message):
 
     users = load_data(USERS_FILE)
 
-    exists = any(
-        u["id"] == message.from_user.id
-        for u in users
-    )
+    exists = False
+
+    for user in users:
+
+        if user["id"] == message.from_user.id:
+            exists = True
+            break
 
     if not exists:
 
@@ -136,26 +172,16 @@ async def start(client, message: Message):
                 "id": message.from_user.id,
                 "name": message.from_user.first_name,
                 "username": message.from_user.username,
-                "join_date": datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+                "join_date": datetime.now().strftime("%d-%m-%Y"),
+                "join_time": datetime.now().strftime("%I:%M %p")
             }
         )
 
         save_data(USERS_FILE, users)
 
-    buttons = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    "👑 AuRa KaRtiK CoNtRoL 👑",
-                    callback_data="owner_panel"
-                )
-            ]
-        ]
-    )
-
     await message.reply_text(
         START_TEXT,
-        reply_markup=buttons
+        reply_markup=MAIN_MENU
     )
 
 # =========================
@@ -179,6 +205,7 @@ async def owner_panel(client, query: CallbackQuery):
                     callback_data="user_history"
                 )
             ],
+
             [
                 InlineKeyboardButton(
                     "🚫 BAN USER",
@@ -190,10 +217,23 @@ async def owner_panel(client, query: CallbackQuery):
                     callback_data="unban_user"
                 )
             ],
+
             [
                 InlineKeyboardButton(
                     "📜 BANNED HISTORY",
                     callback_data="banned_history"
+                )
+            ],
+
+            [
+                InlineKeyboardButton(
+                    "⬅️ BACK",
+                    callback_data="back_panel"
+                ),
+
+                InlineKeyboardButton(
+                    "🏠 MAIN MENU",
+                    callback_data="main_menu"
                 )
             ]
         ]
@@ -214,14 +254,35 @@ async def owner_panel(client, query: CallbackQuery):
     )
 
 # =========================
+# MAIN MENU
+# =========================
+
+@app.on_callback_query(filters.regex("main_menu"))
+async def main_menu(client, query: CallbackQuery):
+
+    await query.message.edit_text(
+        START_TEXT,
+        reply_markup=MAIN_MENU
+    )
+
+# =========================
+# BACK BUTTON
+# =========================
+
+@app.on_callback_query(filters.regex("back_panel"))
+async def back_panel(client, query: CallbackQuery):
+
+    await query.message.edit_text(
+        START_TEXT,
+        reply_markup=MAIN_MENU
+    )
+
+# =========================
 # USER HISTORY
 # =========================
 
 @app.on_callback_query(filters.regex("user_history"))
 async def user_history(client, query: CallbackQuery):
-
-    if query.from_user.id != OWNER_ID:
-        return
 
     users = load_data(USERS_FILE)
 
@@ -233,7 +294,7 @@ async def user_history(client, query: CallbackQuery):
 
     for user in users[-50:]:
 
-        username = user['username']
+        username = user["username"]
 
         if username:
             username = f"@{username}"
@@ -245,188 +306,36 @@ async def user_history(client, query: CallbackQuery):
 👤 NAME: {user['name']}
 🆔 ID: {user['id']}
 📛 USERNAME: {username}
-📅 JOINED: {user['join_date']}
+
+📅 JOIN DATE:
+{user['join_date']}
+
+⏰ JOIN TIME:
+{user['join_time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
 
-    await query.message.edit_text(text)
+    buttons = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "⬅️ BACK",
+                    callback_data="owner_panel"
+                ),
 
-# =========================
-# BAN BUTTON
-# =========================
-
-@app.on_callback_query(filters.regex("ban_user"))
-async def ban_button(client, query: CallbackQuery):
-
-    if query.from_user.id != OWNER_ID:
-        return
-
-    await query.message.reply_text(
-        """
-🚫 𝗕𝗔𝗡 𝗨𝗦𝗘𝗥
-
-Use:
-`/ban user_id`
-"""
+                InlineKeyboardButton(
+                    "🏠 MAIN MENU",
+                    callback_data="main_menu"
+                )
+            ]
+        ]
     )
 
-# =========================
-# UNBAN BUTTON
-# =========================
-
-@app.on_callback_query(filters.regex("unban_user"))
-async def unban_button(client, query: CallbackQuery):
-
-    if query.from_user.id != OWNER_ID:
-        return
-
-    await query.message.reply_text(
-        """
-✅ 𝗨𝗡𝗕𝗔𝗡 𝗨𝗦𝗘𝗥
-
-Use:
-`/unban user_id`
-"""
+    await query.message.edit_text(
+        text,
+        reply_markup=buttons
     )
-
-# =========================
-# BAN COMMAND
-# =========================
-
-@app.on_message(filters.command("ban"))
-async def ban_user(client, message: Message):
-
-    if message.from_user.id != OWNER_ID:
-        return
-
-    if len(message.command) < 2:
-        return
-
-    user_id = int(message.command[1])
-
-    users = load_data(USERS_FILE)
-    banned = load_data(BANNED_FILE)
-
-    for u in banned:
-
-        if u["id"] == user_id:
-            return await message.reply_text(
-                "❌ User Already Banned"
-            )
-
-    target = None
-
-    for user in users:
-
-        if user["id"] == user_id:
-            target = user
-            break
-
-    if not target:
-        return await message.reply_text(
-            "❌ User Not Found"
-        )
-
-    target["ban_time"] = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-
-    banned.append(target)
-
-    save_data(BANNED_FILE, banned)
-
-    await message.reply_text(
-        f"""
-🚫 USER BANNED SUCCESSFULLY
-
-👤 NAME: {target['name']}
-🆔 ID: {target['id']}
-📅 TIME: {target['ban_time']}
-"""
-    )
-
-    try:
-
-        await client.send_message(
-            user_id,
-            """
-🚫 𝗬𝗢𝗨 𝗛𝗔𝗩𝗘 𝗕𝗘𝗘𝗡 𝗕𝗔𝗡𝗡𝗘𝗗
-
-━━━━━━━━━━━━━━━━━━━
-❌ Access Removed
-🛡 Security Action Applied
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-        )
-
-    except:
-        pass
-
-# =========================
-# UNBAN COMMAND
-# =========================
-
-@app.on_message(filters.command("unban"))
-async def unban_user(client, message: Message):
-
-    if message.from_user.id != OWNER_ID:
-        return
-
-    if len(message.command) < 2:
-        return
-
-    user_id = int(message.command[1])
-
-    banned = load_data(BANNED_FILE)
-
-    new_data = []
-
-    removed = None
-
-    for user in banned:
-
-        if user["id"] == user_id:
-            removed = user
-        else:
-            new_data.append(user)
-
-    save_data(BANNED_FILE, new_data)
-
-    if not removed:
-        return await message.reply_text(
-            "❌ User Not Banned"
-        )
-
-    await message.reply_text(
-        f"""
-✅ USER UNBANNED
-
-👤 NAME: {removed['name']}
-🆔 ID: {removed['id']}
-"""
-    )
-
-    try:
-
-        await client.send_message(
-            user_id,
-            """
-✅ 𝗬𝗢𝗨 𝗛𝗔𝗩𝗘 𝗕𝗘𝗘𝗡 𝗨𝗡𝗕𝗔𝗡𝗡𝗘𝗗
-
-━━━━━━━━━━━━━━━━━━━
-🎉 Access Restored
-🚀 Premium Features Activated
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-        )
-
-    except:
-        pass
 
 # =========================
 # BANNED HISTORY
@@ -434,9 +343,6 @@ async def unban_user(client, message: Message):
 
 @app.on_callback_query(filters.regex("banned_history"))
 async def banned_history(client, query: CallbackQuery):
-
-    if query.from_user.id != OWNER_ID:
-        return
 
     banned = load_data(BANNED_FILE)
 
@@ -448,7 +354,7 @@ async def banned_history(client, query: CallbackQuery):
 
     for user in banned[-50:]:
 
-        username = user['username']
+        username = user["username"]
 
         if username:
             username = f"@{username}"
@@ -460,13 +366,154 @@ async def banned_history(client, query: CallbackQuery):
 👤 NAME: {user['name']}
 🆔 ID: {user['id']}
 📛 USERNAME: {username}
-📅 JOINED: {user['join_date']}
-🚫 BANNED: {user['ban_time']}
+
+📅 JOIN DATE:
+{user['join_date']}
+
+⏰ JOIN TIME:
+{user['join_time']}
+
+🚫 BANNED:
+{user['ban_time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
 
-    await query.message.edit_text(text)
+    buttons = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "⬅️ BACK",
+                    callback_data="owner_panel"
+                ),
+
+                InlineKeyboardButton(
+                    "🏠 MAIN MENU",
+                    callback_data="main_menu"
+                )
+            ]
+        ]
+    )
+
+    await query.message.edit_text(
+        text,
+        reply_markup=buttons
+    )
+
+# =========================
+# BAN USER
+# =========================
+
+@app.on_message(filters.command("ban"))
+async def ban_user(client, message: Message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if len(message.command) < 2:
+        return await message.reply_text(
+            "Usage:\n/ban user_id"
+        )
+
+    user_id = int(message.command[1])
+
+    banned = load_data(BANNED_FILE)
+    users = load_data(USERS_FILE)
+
+    for x in banned:
+        if x["id"] == user_id:
+            return await message.reply_text(
+                "❌ User Already Banned"
+            )
+
+    for user in users:
+
+        if user["id"] == user_id:
+
+            user["ban_time"] = datetime.now().strftime(
+                "%d-%m-%Y %I:%M %p"
+            )
+
+            banned.append(user)
+
+            save_data(BANNED_FILE, banned)
+
+            await app.send_message(
+                user_id,
+                """
+🚫 𝗬𝗢𝗨 𝗛𝗔𝗩𝗘 𝗕𝗘𝗘𝗡 𝗕𝗔𝗡𝗡𝗘𝗗
+
+━━━━━━━━━━━━━━━━━━━
+❌ Access Removed
+🛡 Security Action Applied
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
+            )
+
+            return await message.reply_text(
+                "✅ User Banned Successfully"
+            )
+
+# =========================
+# UNBAN USER
+# =========================
+
+@app.on_message(filters.command("unban"))
+async def unban_user(client, message: Message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if len(message.command) < 2:
+        return await message.reply_text(
+            "Usage:\n/unban user_id"
+        )
+
+    user_id = int(message.command[1])
+
+    banned = load_data(BANNED_FILE)
+
+    new_list = []
+
+    removed = False
+
+    for user in banned:
+
+        if user["id"] == user_id:
+
+            removed = True
+
+            await app.send_message(
+                user_id,
+                """
+✅ 𝗬𝗢𝗨 𝗛𝗔𝗩𝗘 𝗕𝗘𝗘𝗡 𝗨𝗡𝗕𝗔𝗡𝗡𝗘𝗗
+
+━━━━━━━━━━━━━━━━━━━
+🎉 Access Restored
+⚡ Premium Services Active
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
+            )
+
+        else:
+            new_list.append(user)
+
+    save_data(BANNED_FILE, new_list)
+
+    if removed:
+        await message.reply_text(
+            "✅ User Unbanned Successfully"
+        )
+    else:
+        await message.reply_text(
+            "❌ User Not Found"
+        )
 
 # =========================
 # PLAY AUDIO
@@ -490,10 +537,7 @@ async def play(client, message: Message):
 
     try:
 
-        results = YoutubeSearch(
-            query,
-            max_results=1
-        ).to_dict()
+        results = YoutubeSearch(query, max_results=1).to_dict()
 
         if not results:
             return await msg.edit_text(
@@ -506,87 +550,62 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        await msg.edit_text(
-            f"⬇️ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗔𝘂𝗱𝗶𝗼...\n\n🎵 {title}"
-        )
-
         ydl_opts = {
-            "format": "bestaudio",
+            "format": "bestaudio/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "retries": 10,
-            "fragment_retries": 10,
-            "sleep_interval_requests": 1,
-            "extractor_retries": 10,
-            "file_access_retries": 10,
-
+            "retries": 15,
+            "fragment_retries": 15,
+            "extractor_retries": 15,
+            "sleep_interval_requests": 3,
             "http_headers": {
                 "User-Agent": "Mozilla/5.0"
             },
-
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android"]
+                    "player_client": [
+                        "android",
+                        "ios"
+                    ]
                 }
             }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
+            info = ydl.extract_info(url, download=True)
 
             file_path = ydl.prepare_filename(info)
 
-        ping = round(
-            (time.time() - start_time) * 1000
-        )
-
-        await msg.edit_text(
-            f"📤 𝗨𝗽𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗔𝘂𝗱𝗶𝗼...\n\n⚡ 𝗣𝗶𝗻𝗴: {ping} ms"
-        )
+        ping = round((time.time() - start_time) * 1000)
 
         await message.reply_audio(
             audio=file_path,
             title=title,
             performer="Premium Music Bot",
             caption=f"""
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
-━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 𝟯𝟮𝟬𝗞𝗕𝗣𝗦
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
-📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
-━━━━━━━━━━━━━━━━━━━
+🎧 PREMIUM MUSIC BOT
 
-🏷 𝗦𝗢𝗡𝗚:
+🏷 SONG:
 {title}
 
-🏓 𝗣𝗜𝗡𝗚:
+🏓 PING:
 {ping} ms
 
-👑 𝗢𝗪𝗡𝗘𝗥:
+👑 OWNER:
 @BeStChEaT_OwNeR
 """
         )
 
         await msg.delete()
 
-        try:
-            os.remove(file_path)
-        except:
-            pass
-
     except Exception as e:
 
         await msg.edit_text(
-            f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{str(e)}"
+            f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{e}"
         )
 
 # =========================
@@ -598,16 +617,14 @@ async def video(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ 𝗘𝘅𝗮𝗺𝗽𝗹𝗲:\n`/video Alan Walker`"
+            "❌ Example:\n/video Alan Walker"
         )
 
     query = " ".join(message.command[1:])
 
     msg = await message.reply_text(
-        f"🔍 𝗦𝗲𝗮𝗿𝗰𝗵𝗶𝗻𝗴 𝗩𝗶𝗱𝗲𝗼...\n\n🎬 {query}"
+        f"🔍 Searching Video...\n\n🎬 {query}"
     )
-
-    start_time = time.time()
 
     try:
 
@@ -616,96 +633,61 @@ async def video(client, message: Message):
             max_results=1
         ).to_dict()
 
-        if not results:
-            return await msg.edit_text(
-                "❌ 𝗩𝗶𝗱𝗲𝗼 𝗻𝗼𝘁 𝗳𝗼𝘂𝗻𝗱"
-            )
-
         song = results[0]
 
         title = song["title"]
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        await msg.edit_text(
-            f"⬇️ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗩𝗶𝗱𝗲𝗼...\n\n🎬 {title}"
-        )
-
         ydl_opts = {
-            "format": "best",
+            "format": "best[ext=mp4]/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "retries": 10,
-            "fragment_retries": 10,
-            "sleep_interval_requests": 1,
-            "extractor_retries": 10,
-            "file_access_retries": 10,
-
+            "retries": 15,
+            "fragment_retries": 15,
+            "extractor_retries": 15,
+            "sleep_interval_requests": 3,
             "http_headers": {
                 "User-Agent": "Mozilla/5.0"
             },
-
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android"]
+                    "player_client": [
+                        "android",
+                        "ios"
+                    ]
                 }
             }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
+            info = ydl.extract_info(url, download=True)
 
             file_path = ydl.prepare_filename(info)
-
-        ping = round(
-            (time.time() - start_time) * 1000
-        )
-
-        await msg.edit_text(
-            f"📤 𝗨𝗽𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗩𝗶𝗱𝗲𝗼...\n\n⚡ 𝗣𝗶𝗻𝗴: {ping} ms"
-        )
 
         await message.reply_video(
             video=file_path,
             caption=f"""
-🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢 𝗕𝗢𝗧
-━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎥 𝗙𝗨𝗟𝗟 𝗛𝗗 𝗩𝗜𝗗𝗘𝗢
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
-📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
-━━━━━━━━━━━━━━━━━━━
+🎬 PREMIUM VIDEO BOT
 
-🏷 𝗩𝗜𝗗𝗘𝗢:
+🏷 VIDEO:
 {title}
 
-🏓 𝗣𝗜𝗡𝗚:
-{ping} ms
-
-👑 𝗢𝗪𝗡𝗘𝗥:
+👑 OWNER:
 @BeStChEaT_OwNeR
 """
         )
 
         await msg.delete()
 
-        try:
-            os.remove(file_path)
-        except:
-            pass
-
     except Exception as e:
 
         await msg.edit_text(
-            f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{str(e)}"
+            f"❌ Error:\n{e}"
         )
 
 print("✅ Premium Music Bot Running")
