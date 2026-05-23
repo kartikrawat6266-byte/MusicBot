@@ -103,21 +103,18 @@ async def play(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-
-            # ===== FIX ADDED =====
+            "cookiefile": None,
+            "retries": 15,
+            "sleep_interval": 1,
+            "sleep_interval_requests": 1,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0"
+            },
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android_creator"]
+                    "player_client": ["android", "web", "ios"]
                 }
-            },
-
-            "http_headers": {
-                "User-Agent": "com.google.android.youtube/"
-            },
-
-            "sleep_interval_requests": 1,
-            "retries": 10,
-            "fragment_retries": 10
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -173,10 +170,7 @@ async def play(client, message: Message):
         error_text = str(e)
 
         if "Sign in to confirm you’re not a bot" in error_text:
-            error_text = (
-                "❌ YouTube temporary blocked request.\n\n"
-                "🔄 Wait 20-30 seconds and try again."
-            )
+            error_text = "❌ YouTube temporary blocked request.\n\n🔄 Wait 20-30 seconds and try again."
 
         await msg.edit_text(
             f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{error_text}"
@@ -226,21 +220,18 @@ async def video(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-
-            # ===== FIX ADDED =====
+            "cookiefile": None,
+            "retries": 15,
+            "sleep_interval": 1,
+            "sleep_interval_requests": 1,
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0"
+            },
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android_creator"]
+                    "player_client": ["android", "web", "ios"]
                 }
-            },
-
-            "http_headers": {
-                "User-Agent": "com.google.android.youtube/"
-            },
-
-            "sleep_interval_requests": 1,
-            "retries": 10,
-            "fragment_retries": 10
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -294,10 +285,7 @@ async def video(client, message: Message):
         error_text = str(e)
 
         if "Sign in to confirm you’re not a bot" in error_text:
-            error_text = (
-                "❌ YouTube temporary blocked request.\n\n"
-                "🔄 Wait 20-30 seconds and try again."
-            )
+            error_text = "❌ YouTube temporary blocked request.\n\n🔄 Wait 20-30 seconds and try again."
 
         await msg.edit_text(
             f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{error_text}"
