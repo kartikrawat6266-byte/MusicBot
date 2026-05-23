@@ -1,9 +1,0 @@
-{
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "startCommand": "pip install yt-dlp aiohttp python-telegram-bot && python bot.py",
-    "restartPolicyType": "ON_FAILURE"
-  }
-}
