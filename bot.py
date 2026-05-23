@@ -68,6 +68,9 @@ async def play(_, message: Message):
     "quiet": True,
     "noplaylist": True,
     "default_search": "ytsearch1",
+            
+    "cookiefile": "cookies.txt",
+            
     "geo_bypass": True,
     "postprocessors": [{
         "key": "FFmpegExtractAudio",
