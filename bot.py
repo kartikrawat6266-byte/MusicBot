@@ -96,7 +96,7 @@ async def play(_, message: Message):
     "default_search": "ytsearch",
     "geo_bypass": True
 }
-        }
+        
 
         # DOWNLOAD AUDIO
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
