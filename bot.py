@@ -87,11 +87,15 @@ async def play(_, message: Message):
 
         # YT-DLP OPTIONS
         ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": "music.%(ext)s",
-            "noplaylist": True,
-            "quiet": True,
-            "cookiefile": "cookies.txt"
+    "format": "bestaudio[ext=m4a]",
+    "outtmpl": "music.%(ext)s",
+    "quiet": True,
+    "noplaylist": True,
+    "extractaudio": True,
+    "audioformat": "mp3",
+    "default_search": "ytsearch",
+    "geo_bypass": True
+}
         }
 
         # DOWNLOAD AUDIO
