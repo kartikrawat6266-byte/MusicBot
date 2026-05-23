@@ -43,7 +43,6 @@ async def song(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             video = info["entries"][0]
-
             filename = ydl.prepare_filename(video)
 
         await update.message.reply_audio(
