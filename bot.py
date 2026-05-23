@@ -33,34 +33,60 @@ async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n/play Alan Walker"
+            "❌ Example:\n/play Golden Brown"
         )
 
     query = " ".join(message.command[1:])
 
+    start_time = time.time()
+
     msg = await message.reply_text(
-        f"🔍 Searching:\n{query}"
+        f"""
+🔍 Searching Song...
+
+🎵 {query}
+"""
     )
 
     try:
 
-        results = YoutubeSearch(query, max_results=1).to_dict()
+        search = VideosSearch(query, limit=1)
 
-        if not results:
-            return await msg.edit_text("❌ Song not found")
+        result = search.result()["result"]
 
-        song = results[0]
+        if not result:
+            return await msg.edit_text(
+                "❌ Song not found"
+            )
+
+        song = result[0]
 
         title = song["title"]
 
-        url = f"https://youtube.com/watch?v={song['id']}"
+        duration = song.get("duration", "Unknown")
 
-        await msg.edit_text(f"⬇️ Downloading:\n{title}")
+        url = song["link"]
+
+        thumbnail = song["thumbnails"][0]["url"]
+
+        await msg.edit_text(
+            f"""
+⬇️ Download Started...
+
+🎵 {title}
+⏱ {duration}
+
+⚡ Ultra Fast Server
+"""
+        )
 
         ydl_opts = {
-            "format": "bestaudio",
+            "format": "bestaudio[ext=m4a]/bestaudio",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
+            "nocheckcertificate": True,
+            "ignoreerrors": False,
+            "geo_bypass": True,
             "noplaylist": True,
         }
 
@@ -71,15 +97,40 @@ async def play(client, message: Message):
             file_path = ydl.prepare_filename(info)
 
         if not os.path.exists(file_path):
-            return await msg.edit_text("❌ Download failed")
+            return await msg.edit_text(
+                "❌ Download failed"
+            )
 
-        await msg.edit_text("📤 Uploading...")
+        await msg.edit_text(
+            f"""
+📤 Uploading Audio...
+
+🎵 {title}
+
+💎 Premium Quality
+"""
+        )
+
+        ping = round((time.time() - start_time) * 1000)
 
         await message.reply_audio(
             audio=file_path,
             title=title,
-            performer="YouTube",
-            caption=f"🎵 {title}"
+            performer="Premium Music",
+            thumb=thumbnail,
+            caption=f"""
+✨━━━━━━━━━━━━━━━━━━✨
+🎵 {title}
+✨━━━━━━━━━━━━━━━━━━✨
+
+⏱ Duration: {duration}
+
+⚡ Ping: {ping} ms
+🚀 Status: Online
+💎 Quality: High
+
+👑 Owner: @BeStChEaT_OwNeR
+"""
         )
 
         await msg.delete()
