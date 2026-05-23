@@ -72,7 +72,10 @@ def save_banned(data):
 # =========================
 
 def is_banned(user_id):
-    return False
+
+    banned = load_banned()
+
+    return str(user_id) in banned
 
 # =========================
 # BOT
