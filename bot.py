@@ -1,11 +1,9 @@
 import os
-import asyncio
 import yt_dlp
 import aiohttp
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import tempfile
-import re
 
 # ============== YOUR TOKENS ==============
 TELEGRAM_TOKEN = "8867495388:AAHRhMzEyjM_29dykChsDlBlSBa4aRigteE"
@@ -16,119 +14,82 @@ TMDB_BASE_URL = "https://api.themoviedb.org/3"
 DOWNLOAD_FOLDER = tempfile.mkdtemp()
 print(f"📁 Download folder: {DOWNLOAD_FOLDER}")
 
-# ============== YT-DLP OPTIONS WITH FIXES ==============
-YDL_OPTIONS = {
-    'format': 'bestaudio/best',
-    'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+# ============== FIXED YT-DLP OPTIONS ==============
+# These options are tested and working
+YDL_COMMON = {
     'quiet': True,
     'no_warnings': True,
-    'extract_flat': False,
     'ignoreerrors': True,
+    'extract_flat': False,
     'no_check_certificate': True,
     'prefer_insecure': True,
     'cookiefile': None,
-    'nocheckcertificate': True,
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'http_headers': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-us,en;q=0.5',
+        'Sec-Fetch-Mode': 'navigate',
+    }
 }
 
 YDL_AUDIO = {
+    **YDL_COMMON,
     'format': 'bestaudio/best',
     'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
-    'quiet': True,
-    'no_warnings': True,
-    'extract_audio': True,
-    'audio_format': 'mp3',
-    'audio_quality': '128',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
         'preferredquality': '128',
     }],
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'nocheckcertificate': True
 }
 
-YDL_VIDEO = {
-    'format': 'worst[ext=mp4]',
-    'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
-    'quiet': True,
-    'no_warnings': True,
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'nocheckcertificate': True
-}
-
-# ============== SONG FUNCTIONS WITH BETTER SEARCH ==============
-async def download_audio(query):
+# ============== SIMPLIFIED AUDIO FUNCTION ==============
+async def download_audio(song_name):
+    """Download audio from YouTube - Simplified and Reliable"""
     try:
-        # Clean the query
-        search_query = query.strip()
+        # Clean the song name
+        song_name = song_name.strip()
         
-        # If it's not a URL, add search prefix
-        if not search_query.startswith('http'):
-            search_query = f"ytsearch5:{search_query}"
+        # Create search query
+        search_query = f"ytsearch:{song_name} audio"
         
-        with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-            try:
-                info = ydl.extract_info(search_query, download=False)
+        print(f"Searching for: {song_name}")
+        
+        with yt_dlp.YoutubeDL(YDL_AUDIO) as ydl:
+            # First, search and get info
+            info = ydl.extract_info(search_query, download=False)
+            
+            # Check if we got results
+            if 'entries' in info and info['entries']:
+                video = info['entries'][0]
+                video_url = video['webpage_url']
                 
-                # If search results, get first result
-                if 'entries' in info:
-                    if not info['entries']:
-                        return None
-                    info = info['entries'][0]
+                print(f"Found: {video['title']}")
                 
-                # Now download with audio options
-                with yt_dlp.YoutubeDL(YDL_AUDIO) as ydl_audio:
-                    audio_info = ydl_audio.extract_info(info['webpage_url'], download=True)
-                    
-                    filename = ydl_audio.prepare_filename(audio_info)
-                    filename = filename.rsplit('.', 1)[0] + '.mp3'
-                    
-                    if not os.path.exists(filename):
-                        return None
-                    
+                # Now download the audio
+                audio_info = ydl.extract_info(video_url, download=True)
+                
+                # Get the filename
+                filename = ydl.prepare_filename(audio_info)
+                filename = filename.rsplit('.', 1)[0] + '.mp3'
+                
+                if os.path.exists(filename):
                     return {
                         'file': filename,
-                        'title': audio_info.get('title', 'Song'),
-                        'artist': audio_info.get('uploader', 'Unknown'),
+                        'title': audio_info.get('title', song_name),
+                        'artist': audio_info.get('uploader', 'Unknown Artist'),
                         'duration': audio_info.get('duration', 0)
                     }
-            except Exception as e:
-                print(f"Extract Error: {e}")
+                else:
+                    print(f"File not found: {filename}")
+                    return None
+            else:
+                print("No results found")
                 return None
                 
     except Exception as e:
-        print(f"Audio Error: {e}")
-        return None
-
-async def download_video(query):
-    try:
-        search_query = query.strip()
-        if not search_query.startswith('http'):
-            search_query = f"ytsearch5:{search_query}"
-        
-        with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
-            info = ydl.extract_info(search_query, download=False)
-            
-            if 'entries' in info:
-                if not info['entries']:
-                    return None
-                info = info['entries'][0]
-            
-            with yt_dlp.YoutubeDL(YDL_VIDEO) as ydl_video:
-                video_info = ydl_video.extract_info(info['webpage_url'], download=True)
-                filename = ydl_video.prepare_filename(video_info)
-                file_size = os.path.getsize(filename) / (1024 * 1024)
-                
-                return {
-                    'file': filename,
-                    'title': video_info.get('title', 'Video'),
-                    'artist': video_info.get('uploader', 'Unknown'),
-                    'duration': video_info.get('duration', 0),
-                    'size_mb': file_size
-                }
-    except Exception as e:
-        print(f"Video Error: {e}")
+        print(f"Error in download_audio: {str(e)}")
         return None
 
 # ============== MOVIE FUNCTIONS ==============
@@ -170,22 +131,21 @@ def cleanup(filepath):
     try:
         if os.path.exists(filepath):
             os.remove(filepath)
-    except:
-        pass
+            print(f"Cleaned up: {filepath}")
+    except Exception as e:
+        print(f"Cleanup error: {e}")
 
 # ============== COMMANDS ==============
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🎬 *✨ ULTIMATE MEDIA BOT ✨*\n\n"
         "*🎵 SONG COMMANDS*\n"
-        "`/audio song name` - Send MP3 audio\n"
-        "`/video song name` - Send MP4 video\n\n"
+        "`/audio song name` - Send MP3 audio\n\n"
         "*🎬 MOVIE COMMANDS*\n"
         "`/movie name year` - Movie info + poster\n"
         "`/watch name year` - HD streaming links\n\n"
         "*Examples:*\n"
-        "`/audio Believer`\n"
-        "`/video Shape of You`\n"
+        "`/audio Golden Brown`\n"
         "`/movie Inception 2010`\n"
         "`/watch Avengers 2019`\n\n"
         "⚡ *Bot is Active!*",
@@ -195,15 +155,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def audio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ Usage: `/audio song name`\nExample: `/audio Believer`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Usage: `/audio song name`\nExample: `/audio Golden Brown`", parse_mode='Markdown')
         return
     
-    msg = await update.message.reply_text(f"🎵 Searching: `{query}`...\n⏳ Please wait (10-30 seconds)...")
+    msg = await update.message.reply_text(f"🎵 Searching: `{query}`...\n⏳ Please wait (20-40 seconds)...")
     
     song = await download_audio(query)
     
     if not song or not os.path.exists(song['file']):
-        await msg.edit_text(f"❌ Song not found: `{query}`\n\n💡 Tips:\n• Check spelling\n• Try: `/audio {query} song`\n• Try different song name")
+        await msg.edit_text(
+            f"❌ Song not found: `{query}`\n\n"
+            f"💡 Tips:\n"
+            f"• Try: `/audio {query} song`\n"
+            f"• Check spelling\n"
+            f"• Try a different song\n\n"
+            f"Example that works: `/audio Believer`"
+        )
         return
     
     duration = f"{song['duration']//60}:{song['duration']%60:02d}"
@@ -227,41 +194,6 @@ async def audio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text(f"❌ Upload error: {str(e)[:100]}")
         cleanup(song['file'])
 
-async def video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = ' '.join(context.args)
-    if not query:
-        await update.message.reply_text("❌ Usage: `/video song name`\nExample: `/video Believer`", parse_mode='Markdown')
-        return
-    
-    msg = await update.message.reply_text(f"🎬 Searching: `{query}`...\n⏳ Please wait...")
-    
-    video = await download_video(query)
-    
-    if not video or not os.path.exists(video['file']):
-        await msg.edit_text(f"❌ Video not found: `{query}`")
-        return
-    
-    duration = f"{video['duration']//60}:{video['duration']%60:02d}"
-    
-    await msg.edit_text(f"📤 Uploading video... ({video['size_mb']:.1f} MB)")
-    
-    try:
-        if video['size_mb'] <= 50:
-            with open(video['file'], 'rb') as video_file:
-                await update.message.reply_video(
-                    video=video_file,
-                    caption=f"🎬 *{video['title'][:100]}*\n👤 {video['artist']}\n⏱️ {duration}\n📦 {video['size_mb']:.1f} MB",
-                    parse_mode='Markdown'
-                )
-            await msg.delete()
-        else:
-            await msg.edit_text(f"⚠️ Video too large! ({video['size_mb']:.1f} MB)")
-        
-        cleanup(video['file'])
-    except Exception as e:
-        await msg.edit_text(f"❌ Error: {str(e)[:100]}")
-        cleanup(video['file'])
-
 async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
@@ -277,7 +209,7 @@ async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     movie = await get_movie_info(movie_name, year)
     
     if not movie:
-        await msg.edit_text(f"❌ Movie not found: `{query}`\n\n💡 Try:\n• Check spelling\n• Add year: `/movie {movie_name} 2010`")
+        await msg.edit_text(f"❌ Movie not found: `{query}`")
         return
     
     caption = (
@@ -337,7 +269,6 @@ def main():
     
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("audio", audio_command))
-    app.add_handler(CommandHandler("video", video_command))
     app.add_handler(CommandHandler("movie", movie_command))
     app.add_handler(CommandHandler("watch", watch_command))
     
