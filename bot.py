@@ -7,7 +7,7 @@ import yt_dlp
 
 API_ID = 35140329
 API_HASH = "011f638e4acadee178c59afffc80193d"
-BOT_TOKEN = "8937999210:AAFhMDKRMs5yIIaO9QtU1zWzjYhAPz5iRCo"
+BOT_TOKEN = "8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw"
 
 app = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
