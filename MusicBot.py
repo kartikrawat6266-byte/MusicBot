@@ -11,8 +11,8 @@ import shutil
 load_dotenv()
 
 # ============== TOKENS ==============
-TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TMDB_API_KEY = os.getenv('TMDB_API_KEY')
+TELEGRAM_TOKEN = os.getenv('8867495388:AAHRhMzEyjM_29dykChsDlBlSBa4aRigteE')
+TMDB_API_KEY = os.getenv('dd704eb8a6d78d77566aea8269a44f37')
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 # ============== TEMP FOLDER FOR RAILWAY ==============
