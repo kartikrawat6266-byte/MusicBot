@@ -3,7 +3,7 @@ import yt_dlp
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = os.getenv("8937999210:AAFMY6svP5Nc6k0stAt-HcFE0LcHOwlobAM")
 
 async def start_music(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.message.text
