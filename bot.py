@@ -19,7 +19,7 @@ async def song(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     query = " ".join(context.args)
 
-    msg = await update.message.reply_text(
+    searching = await update.message.reply_text(
         f"🔍 Searching {query}"
     )
 
@@ -48,7 +48,7 @@ async def song(update: Update, context: ContextTypes.DEFAULT_TYPE):
             title=video["title"]
         )
 
-        await msg.delete()
+        await searching.delete()
 
     except Exception as e:
         await update.message.reply_text(str(e))
