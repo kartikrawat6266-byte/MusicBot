@@ -91,7 +91,7 @@ START_TEXT = """
 # CHECK BAN
 # =========================
 
-@app.on_message(filters.private & ~filters.command(["ban", "unban"]))
+@app.on_message(filters.private, group=-1)
 async def check_ban(client, message):
 
     banned = load_data(BANNED_FILE)
@@ -100,7 +100,7 @@ async def check_ban(client, message):
 
         if user["id"] == message.from_user.id:
 
-            return await message.reply_text(
+            await message.reply_text(
                 """
 🚫 𝗔𝗖𝗖𝗘𝗦𝗦 𝗗𝗘𝗡𝗜𝗘𝗗
 
@@ -112,6 +112,8 @@ async def check_ban(client, message):
 @BeStChEaT_OwNeR
 """
             )
+
+            raise StopPropagation
 
 # =========================
 # START
