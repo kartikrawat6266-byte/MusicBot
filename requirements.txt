@@ -1,5 +1,4 @@
 pyrogram
 tgcrypto
-yt-dlp
 youtube-search
-ffmpeg-python
+yt-dlp==2026.05.22
