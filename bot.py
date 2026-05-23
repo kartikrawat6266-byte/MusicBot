@@ -45,7 +45,7 @@ async def play(client, message: Message):
 
     msg = await message.reply_text(
         f"""
-🔍 Searching Song...
+🔍 Searching...
 
 🎵 {query}
 """
@@ -53,49 +53,23 @@ async def play(client, message: Message):
 
     try:
 
-        search = VideosSearch(query, limit=1)
-
-        result = search.result()["result"]
-
-        if not result:
-            return await msg.edit_text(
-                "❌ Song not found"
-            )
-
-        song = result[0]
-
-        title = song["title"]
-
-        duration = song.get("duration", "Unknown")
-
-        url = song["link"]
-
-        thumbnail = song["thumbnails"][0]["url"]
-
-        await msg.edit_text(
-            f"""
-⬇️ Download Started...
-
-🎵 {title}
-⏱ {duration}
-
-⚡ Ultra Fast Server
-"""
-        )
-
         ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio",
+            "format": "bestaudio",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
-            "nocheckcertificate": True,
-            "ignoreerrors": False,
-            "geo_bypass": True,
             "noplaylist": True,
+            "default_search": "ytsearch1",
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            info = ydl.extract_info(url, download=True)
+            info = ydl.extract_info(query, download=True)
+
+            if "entries" in info:
+                info = info["entries"][0]
+
+            title = info.get("title", "Unknown")
+            duration = info.get("duration_string", "Unknown")
 
             file_path = ydl.prepare_filename(info)
 
@@ -106,7 +80,7 @@ async def play(client, message: Message):
 
         await msg.edit_text(
             f"""
-📤 Uploading Audio...
+📤 Uploading...
 
 🎵 {title}
 
@@ -120,7 +94,6 @@ async def play(client, message: Message):
             audio=file_path,
             title=title,
             performer="Premium Music",
-            thumb=thumbnail,
             caption=f"""
 ✨━━━━━━━━━━━━━━━━━━✨
 🎵 {title}
