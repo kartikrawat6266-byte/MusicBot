@@ -1,3 +1,7 @@
 Pyrogram==2.0.106
+PyTgCalls==2.1.0
 yt-dlp
 youtube-search-python
+TgCrypto
+nest-asyncio
+aiohttp
