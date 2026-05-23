@@ -1,4 +1,4 @@
 pyrogram
 tgcrypto
-youtube-search-python
 yt-dlp==2025.05.22
+youtube-search-python
