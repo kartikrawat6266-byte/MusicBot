@@ -1,5 +1,5 @@
-pyrogram==2.0.106
+pyrogram
 tgcrypto
 yt-dlp
-requests==2.31.0
-urllib3==1.26.18
+youtube-search-python
+ffmpeg
