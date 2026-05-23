@@ -1,115 +1,90 @@
+import asyncio
 import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from youtube_search import YoutubeSearch
-from pytube import YouTube
+import yt_dlp
 
-# =========================
-# TELEGRAM API DETAILS
-# =========================
 API_ID = 35140329
 API_HASH = "011f638e4acadee178c59afffc80193d"
 BOT_TOKEN = "8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw"
 
-# =========================
-# BOT CLIENT
-# =========================
-app = Client(
-    "music_bot",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
-)
+app = Client("music_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# =========================
-# DOWNLOADS FOLDER
-# =========================
+# Create downloads folder
 if not os.path.exists("downloads"):
     os.makedirs("downloads")
 
-# =========================
-# START COMMAND
-# =========================
 @app.on_message(filters.command("start"))
-async def start(client, message: Message):
-
+async def start_command(client, message: Message):
     await message.reply_text(
-        "🎵 Music Bot Online!\n\n"
-        "Use:\n"
-        "/play song name"
+        "🎵 *Music Bot Active!*\n\n"
+        "*Commands:*\n"
+        "`/play song_name` - Song download karo\n\n"
+        "*Example:* `/play Bala hatke`\n\n"
+        "*Live VC ke liye:* @KurumiMusicRobot use karo",
+        parse_mode="Markdown"
     )
 
-# =========================
-# PLAY COMMAND
-# =========================
 @app.on_message(filters.command("play"))
-async def play(client, message: Message):
-
+async def play_command(client, message: Message):
     if len(message.command) < 2:
-        await message.reply_text(
-            "❌ Example:\n/play Golden Brown"
-        )
+        await message.reply_text("❌ Song name likho! Example: `/play Bala hatke`")
         return
-
+    
     query = " ".join(message.command[1:])
-
-    msg = await message.reply_text(
-        f"🔍 Searching:\n{query}"
-    )
-
+    status = await message.reply_text(f"🎵 *Searching:* `{query}`...", parse_mode="Markdown")
+    
     try:
         # Search YouTube
         results = YoutubeSearch(query, max_results=1).to_dict()
-
         if not results:
-            await msg.edit("❌ Song not found")
+            await status.edit_text(f"❌ *Song nahi mila:* `{query}`", parse_mode="Markdown")
             return
-
+        
         song = results[0]
-
-        title = song["title"]
         url = f"https://youtube.com/watch?v={song['id']}"
-
-        await msg.edit(
-            f"⬇️ Downloading:\n{title}"
-        )
-
+        title = song['title']
+        
+        await status.edit_text(f"🎵 *Downloading:* `{title}`...", parse_mode="Markdown")
+        
         # Download audio
-        yt = YouTube(url)
-
-        stream = yt.streams.filter(
-            only_audio=True
-        ).first()
-
-        file_path = stream.download(
-            output_path="downloads"
-        )
-
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': 'downloads/%(title)s.%(ext)s',
+            'quiet': True,
+            'no_warnings': True,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
+        
         # Send audio
+        await status.delete()
         await message.reply_audio(
-            audio=file_path,
+            filename,
             title=title,
-            performer="Music Bot",
-            caption=f"🎵 {title}"
+            performer="YouTube",
+            caption=f"🎵 *{title}*"
         )
-
-        # Delete status message
-        await msg.delete()
-
-        # Delete downloaded file
+        
+        # Delete file after sending
         try:
-            os.remove(file_path)
+            os.remove(filename)
         except:
             pass
-
+            
     except Exception as e:
-        await msg.edit(
-            f"❌ Error:\n{str(e)}"
-        )
+        await status.edit_text(f"❌ *Error:* {str(e)[:200]}", parse_mode="Markdown")
 
-# =========================
-# START BOT
-# =========================
-print("✅ Music Bot Started")
+async def main():
+    await app.start()
+    print("="*40)
+    print("✅ MUSIC BOT IS RUNNING!")
+    print("Send /play song_name")
+    print("="*40)
+    await asyncio.Event().wait()
 
-app.run()
+if __name__ == "__main__":
+    asyncio.run(main())
