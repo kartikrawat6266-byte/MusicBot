@@ -62,25 +62,26 @@ async def play(_, message: Message):
 
     try:
 
-ydl_opts = {
-    "format": "best",
-    "outtmpl": "music.%(ext)s",
-    "quiet": True,
-    "noplaylist": True,
-    "default_search": "ytsearch1",
-    "cookiefile": "cookies.txt",
-    "geo_bypass": True
-}
+try:
+    ydl_opts = {
+        "format": "best",
+        "outtmpl": "music.%(ext)s",
+        "quiet": True,
+        "noplaylist": True,
+        "default_search": "ytsearch1",
+        "cookiefile": "cookies.txt",
+        "geo_bypass": True
+    }
 
-with YoutubeDL(ydl_opts) as ydl:
+    with YoutubeDL(ydl_opts) as ydl:
 
-    info = ydl.extract_info(query, download=True)
+        info = ydl.extract_info(query, download=True)
 
-    if "entries" in info:
-        info = info["entries"][0]
+        if "entries" in info:
+            info = info["entries"][0]
 
-    title = info["title"]
-    file_path = ydl.prepare_filename(info)
+        title = info["title"]
+        file_path = ydl.prepare_filename(info)
 
         ping = round((time.time() - start_time) * 1000)
 
