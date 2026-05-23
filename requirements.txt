@@ -1,4 +1,3 @@
-pyrogram
-tgcrypto
-youtube-search
+Pyrogram
 yt-dlp
+youtube-search-python
