@@ -23,7 +23,7 @@ bot = Client(
 async def start(_, message: Message):
 
     await message.reply_text(
-        f"""
+        """
 🎵 **Premium Music Bot Active!**
 
 ━━━━━━━━━━━━━━
@@ -85,23 +85,35 @@ async def play(_, message: Message):
 """
         )
 
+        # FILE NAME
+        file_path = "music.mp3"
+
         # YT-DLP OPTIONS
         ydl_opts = {
-    "format": "bestaudio[ext=m4a]",
-    "outtmpl": "music.%(ext)s",
-    "quiet": True,
-    "noplaylist": True,
-    "extractaudio": True,
-    "audioformat": "mp3",
-    "default_search": "ytsearch",
-    "geo_bypass": True
-}
-        
+            "format": "bestaudio/best",
+            "outtmpl": "music.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "cookiefile": "cookies.txt",
+            "postprocessors": [
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": "mp3",
+                    "preferredquality": "192",
+                }
+            ],
+        }
 
         # DOWNLOAD AUDIO
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            file_path = ydl.prepare_filename(info)
+            ydl.download([url])
+
+        # FIND MP3 FILE
+        for file in os.listdir():
+            if file.endswith(".mp3"):
+                file_path = file
+                break
 
         ping = round((time.time() - start_time) * 1000)
 
