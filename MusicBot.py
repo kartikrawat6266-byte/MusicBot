@@ -1,136 +1,98 @@
-import discord
-from discord.ext import commands
-from discord.ui import Button, View
-import yt_dlp as youtube_dl
-import asyncio
-import aiohttp
-from youtubesearchpython import VideosSearch
 import os
+import asyncio
+import yt_dlp
+import aiohttp
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from dotenv import load_dotenv
-from datetime import datetime
+import tempfile
+import shutil
 
 load_dotenv()
 
-# ============== PREMIUM SETUP ==============
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
-
-# Premium Colors
-COLORS = {
-    'music': 0x1DB954,     # Spotify Green
-    'video': 0xFF0000,     # YouTube Red
-    'movie': 0xFFD700,     # Gold
-    'info': 0x00B4D8,      # Blue
-    'error': 0xFF3366,     # Red
-    'success': 0x00FF88    # Green
-}
-
-# Audio Setup
-FFMPEG_OPTIONS = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn'
-}
-
-YDL_AUDIO = {
-    'format': 'bestaudio/best',
-    'noplaylist': True,
-    'quiet': True,
-    'extract_flat': False
-}
-
-YDL_VIDEO = {
-    'format': 'best[height<=1080]',
-    'noplaylist': True,
-    'quiet': True
-}
-
-# Queue System
-queues = {}
-
-# TMDB API (Free - Get from themoviedb.org)
-TMDB_API_KEY = os.getenv('TMDB_API_KEY', 'your_key_here')
+# ============== TOKENS ==============
+TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TMDB_API_KEY = os.getenv('TMDB_API_KEY')
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
-# ============== PREMIUM EMBED FUNCTION ==============
-def premium_embed(title, description, color, thumbnail=None, image=None):
-    embed = discord.Embed(
-        title=f"✨ {title} ✨",
-        description=description,
-        color=color,
-        timestamp=datetime.utcnow()
-    )
-    embed.set_footer(text="🎬 Ultimate Entertainment Bot • Premium Quality")
-    if thumbnail:
-        embed.set_thumbnail(url=thumbnail)
-    if image:
-        embed.set_image(url=image)
-    return embed
+# ============== TEMP FOLDER FOR RAILWAY ==============
+# Railway has limited storage, use temp folder
+DOWNLOAD_FOLDER = tempfile.mkdtemp()
+print(f"📁 Download folder: {DOWNLOAD_FOLDER}")
 
-# ============== SONG FUNCTIONS (AUDIO) ==============
-async def get_song_audio(query):
-    """Get audio stream URL from song name"""
-    with youtube_dl.YoutubeDL(YDL_AUDIO) as ydl:
-        try:
+# Audio download options (lower quality for faster download)
+YDL_AUDIO = {
+    'format': 'bestaudio/best',
+    'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+    'quiet': True,
+    'no_warnings': True,
+    'extract_audio': True,
+    'audio_format': 'mp3',
+    'audio_quality': '128',  # Lower quality for faster download
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '128',
+    }]
+}
+
+# Video download options (lowest quality for Railway)
+YDL_VIDEO = {
+    'format': 'worst[ext=mp4]',  # Smallest size for Railway
+    'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
+    'quiet': True,
+    'no_warnings': True,
+}
+
+# ============== SONG AUDIO ==============
+async def download_audio(query):
+    try:
+        with yt_dlp.YoutubeDL(YDL_AUDIO) as ydl:
             if query.startswith('http'):
-                info = ydl.extract_info(query, download=False)
+                info = ydl.extract_info(query, download=True)
             else:
-                info = ydl.extract_info(f"ytsearch:{query}", download=False)['entries'][0]
+                info = ydl.extract_info(f"ytsearch:{query}", download=True)['entries'][0]
+            
+            filename = ydl.prepare_filename(info)
+            filename = filename.rsplit('.', 1)[0] + '.mp3'
             
             return {
-                'url': info['url'],
-                'title': info['title'],
-                'artist': info.get('uploader', 'Unknown Artist'),
+                'file': filename,
+                'title': info.get('title', 'Song'),
+                'artist': info.get('uploader', 'Unknown'),
                 'duration': info.get('duration', 0),
-                'views': info.get('view_count', 0),
-                'likes': info.get('like_count', 0),
                 'thumbnail': info.get('thumbnail', ''),
                 'video_url': f"https://youtube.com/watch?v={info['id']}"
             }
-        except Exception as e:
-            print(f"Audio Error: {e}")
-            return None
+    except Exception as e:
+        print(f"Audio Error: {e}")
+        return None
 
-async def play_next(ctx, server_id):
-    if queues.get(server_id) and queues[server_id]:
-        song = queues[server_id].pop(0)
-        ctx.voice_client.play(
-            discord.FFmpegPCMAudio(song['url'], **FFMPEG_OPTIONS),
-            after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx, server_id), bot.loop)
-        )
-        embed = premium_embed(
-            "🎵 NOW PLAYING",
-            f"**{song['title']}**\n👤 {song['artist']}\n⏱️ `{song['duration']//60}:{song['duration']%60:02d}`",
-            COLORS['success'],
-            thumbnail=song['thumbnail']
-        )
-        await ctx.send(embed=embed)
-
-# ============== SONG FUNCTIONS (VIDEO) ==============
-async def get_song_video(query):
-    """Get video URL from song name"""
-    with youtube_dl.YoutubeDL(YDL_VIDEO) as ydl:
-        try:
+# ============== SONG VIDEO ==============
+async def download_video(query):
+    try:
+        with yt_dlp.YoutubeDL(YDL_VIDEO) as ydl:
             if query.startswith('http'):
-                info = ydl.extract_info(query, download=False)
+                info = ydl.extract_info(query, download=True)
             else:
-                info = ydl.extract_info(f"ytsearch:{query}", download=False)['entries'][0]
+                info = ydl.extract_info(f"ytsearch:{query}", download=True)['entries'][0]
+            
+            filename = ydl.prepare_filename(info)
+            file_size = os.path.getsize(filename) / (1024 * 1024)
             
             return {
-                'title': info['title'],
-                'url': info['webpage_url'],
+                'file': filename,
+                'title': info.get('title', 'Video'),
+                'artist': info.get('uploader', 'Unknown'),
                 'duration': info.get('duration', 0),
-                'views': info.get('view_count', 0),
-                'likes': info.get('like_count', 0),
-                'uploader': info.get('uploader', 'Unknown'),
-                'thumbnail': info.get('thumbnail', ''),
-                'quality': info.get('resolution', '1080p')
+                'size_mb': file_size,
+                'video_url': f"https://youtube.com/watch?v={info['id']}"
             }
-        except Exception as e:
-            print(f"Video Error: {e}")
-            return None
+    except Exception as e:
+        print(f"Video Error: {e}")
+        return None
 
-# ============== MOVIE FUNCTIONS ==============
+# ============== MOVIE INFO ==============
 async def get_movie_info(movie_name, year=None):
     async with aiohttp.ClientSession() as session:
         search_url = f"{TMDB_BASE_URL}/search/movie"
@@ -162,324 +124,194 @@ async def get_movie_info(movie_name, year=None):
                     'overview': details.get('overview', 'No description'),
                     'genres': [g['name'] for g in details.get('genres', [])],
                     'runtime': details.get('runtime', 'N/A'),
-                    'poster': f"https://image.tmdb.org/t/p/w500{details.get('poster_path', '')}" if details.get('poster_path') else None,
-                    'backdrop': f"https://image.tmdb.org/t/p/original{details.get('backdrop_path', '')}" if details.get('backdrop_path') else None
+                    'poster': f"https://image.tmdb.org/t/p/w500{details.get('poster_path', '')}" if details.get('poster_path') else None
                 }
 
-async def get_movie_video(movie_id, movie_title, year):
-    """Get streaming links for movie"""
-    streams = [
-        f"🎬 **VidSrc (4K/1080p)**\n🔗 https://vidsrc.to/embed/movie/{movie_id}\n",
-        f"🎥 **2Embed (1080p)**\n🔗 https://www.2embed.to/embed/tmdb/movie/{movie_id}\n",
-        f"📺 **MovieWeb (HD)**\n🔗 https://movie-web.app/movie/{movie_id}\n"
-    ]
-    
-    # Also search YouTube for full movie
-    search = VideosSearch(f"{movie_title} {year} full movie", limit=2)
-    results = search.result()
-    
-    youtube_links = []
-    for video in results.get('result', []):
-        duration = video.get('duration', '0:00')
-        if 'hour' in video.get('title', '').lower() or ':' in duration and len(duration.split(':')) >= 2:
-            youtube_links.append(f"📺 **YouTube**\n🔗 {video['link']}\n📹 {video['duration']}\n")
-    
-    return streams, youtube_links
-
-# ============== INTERACTIVE BUTTONS ==============
-class SongButtons(View):
-    def __init__(self, song_data):
-        super().__init__(timeout=60)
-        self.song_data = song_data
-    
-    @discord.ui.button(label="🎵 PLAY AUDIO", style=discord.ButtonStyle.success, emoji="🔊")
-    async def audio_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = premium_embed(
-            "🎵 AUDIO COMMAND",
-            f"Use `!play {self.song_data['title'][:50]}` to play in voice channel!\n\n💡 First join a voice channel, then use the command.",
-            COLORS['music'],
-            thumbnail=self.song_data['thumbnail']
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-    
-    @discord.ui.button(label="📺 WATCH VIDEO", style=discord.ButtonStyle.primary, emoji="🎥")
-    async def video_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = premium_embed(
-            f"🎬 {self.song_data['title'][:50]}",
-            f"**Watch on YouTube:**\n🔗 {self.song_data['video_url']}\n\n📺 Quality: `1080p HD`\n👤 Uploader: `{self.song_data['artist']}`\n👁️ Views: `{self.song_data['views']:,}`",
-            COLORS['video'],
-            thumbnail=self.song_data['thumbnail']
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-class MovieButtons(View):
-    def __init__(self, movie_id, movie_title, year):
-        super().__init__(timeout=60)
-        self.movie_id = movie_id
-        self.movie_title = movie_title
-        self.year = year
-    
-    @discord.ui.button(label="🎬 WATCH MOVIE", style=discord.ButtonStyle.primary, emoji="🎥")
-    async def watch_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        streams, youtube_links = await get_movie_video(self.movie_id, self.movie_title, self.year)
-        
-        description = "**🎥 STREAMING SOURCES (4K/1080p):**\n\n" + "\n".join(streams)
-        if youtube_links:
-            description += "\n**📺 YOUTUBE (Full Movie):**\n\n" + "\n".join(youtube_links[:2])
-        
-        embed = premium_embed(
-            f"📺 {self.movie_title} ({self.year}) - WATCH ONLINE",
-            description[:4000],
-            COLORS['movie']
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+# ============== CLEANUP ==============
+def cleanup(filepath):
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            print(f"Cleaned: {filepath}")
+    except:
+        pass
 
 # ============== BOT COMMANDS ==============
 
-@bot.event
-async def on_ready():
-    print(f'✅ ULTIMATE BOT ONLINE!')
-    print(f'🤖 {bot.user}')
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name="🎵 Songs & Movies"))
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🎬 *✨ ULTIMATE MEDIA BOT ✨*\n\n"
+        "*Commands:*\n\n"
+        "🎵 *SONG COMMANDS*\n"
+        "`/audio song name` - Send MP3 audio\n"
+        "`/video song name` - Send MP4 video\n\n"
+        "🎬 *MOVIE COMMANDS*\n"
+        "`/movie name year` - Movie info + poster\n"
+        "`/watch name year` - HD streaming links\n\n"
+        "*Examples:*\n"
+        "`/audio Believer`\n"
+        "`/video Believer`\n"
+        "`/movie Inception 2010`\n"
+        "`/watch Avengers 2019`\n\n"
+        "⚡ *Powered by Railway*",
+        parse_mode='Markdown'
+    )
 
-# ----- SONG AUDIO COMMAND -----
-@bot.command(name='play', aliases=['p', 'audio'])
-async def play_audio(ctx, *, query):
-    """🎵 Play song audio in voice channel - !play song name"""
-    
-    if not ctx.author.voice:
-        embed = premium_embed("❌ ERROR", "Join a voice channel first!", COLORS['error'])
-        await ctx.send(embed=embed)
+async def audio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = ' '.join(context.args)
+    if not query:
+        await update.message.reply_text("❌ *Usage:* `/audio song name`", parse_mode='Markdown')
         return
     
-    voice_channel = ctx.author.voice.channel
-    if not ctx.voice_client:
-        await voice_channel.connect()
-    elif ctx.voice_client.channel != voice_channel:
-        await ctx.voice_client.move_to(voice_channel)
+    msg = await update.message.reply_text(f"🎵 *Downloading:* `{query}`...\n⏳ Please wait...", parse_mode='Markdown')
     
-    loading = await ctx.send(embed=premium_embed("🔍 SEARCHING", f"Looking for `{query}`...", COLORS['info']))
+    song = await download_audio(query)
     
-    song = await get_song_audio(query)
-    
-    if not song:
-        await loading.edit(embed=premium_embed("❌ ERROR", "Song not found!", COLORS['error']))
+    if not song or not os.path.exists(song['file']):
+        await msg.edit_text("❌ *Error:* Song not found!", parse_mode='Markdown')
         return
     
-    server_id = ctx.guild.id
-    if server_id not in queues:
-        queues[server_id] = []
+    duration = f"{song['duration']//60}:{song['duration']%60:02d}"
+    file_size = os.path.getsize(song['file']) / (1024 * 1024)
     
-    if not ctx.voice_client.is_playing():
-        ctx.voice_client.play(
-            discord.FFmpegPCMAudio(song['url'], **FFMPEG_OPTIONS),
-            after=lambda e: asyncio.run_coroutine_threadsafe(play_next(ctx, server_id), bot.loop)
-        )
-        await loading.delete()
-        embed = premium_embed(
-            "🎵 NOW PLAYING",
-            f"**{song['title']}**\n👤 `{song['artist']}`\n⏱️ `{song['duration']//60}:{song['duration']%60:02d}`\n❤️ `{song['likes']:,}` likes",
-            COLORS['success'],
-            thumbnail=song['thumbnail']
-        )
-        await ctx.send(embed=embed, view=SongButtons(song))
+    await msg.edit_text(f"📤 *Uploading...* ({file_size:.1f} MB)")
+    
+    try:
+        with open(song['file'], 'rb') as audio_file:
+            await update.message.reply_audio(
+                audio=audio_file,
+                title=song['title'][:100],
+                performer=song['artist'],
+                duration=song['duration'],
+                caption=f"🎵 *{song['title'][:50]}*\n👤 {song['artist']}\n⏱️ {duration}\n📦 {file_size:.1f} MB",
+                parse_mode='Markdown'
+            )
+        await msg.delete()
+        cleanup(song['file'])
+    except Exception as e:
+        await msg.edit_text(f"❌ *Error:* {str(e)[:100]}", parse_mode='Markdown')
+        cleanup(song['file'])
+
+async def video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = ' '.join(context.args)
+    if not query:
+        await update.message.reply_text("❌ *Usage:* `/video song name`", parse_mode='Markdown')
+        return
+    
+    msg = await update.message.reply_text(f"🎬 *Downloading video:* `{query}`...\n⏳ Please wait...", parse_mode='Markdown')
+    
+    video = await download_video(query)
+    
+    if not video or not os.path.exists(video['file']):
+        await msg.edit_text("❌ *Error:* Video not found!", parse_mode='Markdown')
+        return
+    
+    duration = f"{video['duration']//60}:{video['duration']%60:02d}"
+    
+    await msg.edit_text(f"📤 *Uploading video...* ({video['size_mb']:.1f} MB)")
+    
+    try:
+        if video['size_mb'] <= 50:
+            with open(video['file'], 'rb') as video_file:
+                await update.message.reply_video(
+                    video=video_file,
+                    caption=f"🎬 *{video['title'][:100]}*\n👤 {video['artist']}\n⏱️ {duration}\n📦 {video['size_mb']:.1f} MB",
+                    parse_mode='Markdown'
+                )
+            await msg.delete()
+        else:
+            await msg.edit_text(f"⚠️ *Video too large!* ({video['size_mb']:.1f} MB)\n📺 [Watch on YouTube]({video['video_url']})", parse_mode='Markdown')
+        
+        cleanup(video['file'])
+    except Exception as e:
+        await msg.edit_text(f"❌ *Error:* {str(e)[:100]}", parse_mode='Markdown')
+        cleanup(video['file'])
+
+async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = ' '.join(context.args)
+    if not query:
+        await update.message.reply_text("❌ *Usage:* `/movie Movie Name Year`", parse_mode='Markdown')
+        return
+    
+    parts = query.rsplit(' ', 1)
+    year = parts[1] if len(parts) > 1 and parts[1].isdigit() else None
+    movie_name = parts[0] if year else query
+    
+    msg = await update.message.reply_text(f"🔍 *Searching:* `{movie_name}`...", parse_mode='Markdown')
+    
+    movie = await get_movie_info(movie_name, year)
+    
+    if not movie:
+        await msg.edit_text(f"❌ *Movie not found:* `{query}`", parse_mode='Markdown')
+        return
+    
+    caption = (
+        f"🎬 *{movie['title']} ({movie['year']})*\n\n"
+        f"⭐ *Rating:* {movie['rating']}/10 {movie['stars']}\n"
+        f"⏱️ *Runtime:* {movie['runtime']} min\n"
+        f"🎭 *Genres:* `{'`, `'.join(movie['genres'][:3])}`\n\n"
+        f"📝 *Overview:* {movie['overview'][:300]}...\n\n"
+        f"📺 `/watch {movie['title']} {movie['year']}`"
+    )
+    
+    await msg.delete()
+    
+    if movie['poster']:
+        await update.message.reply_photo(photo=movie['poster'], caption=caption, parse_mode='Markdown')
     else:
-        queues[server_id].append(song)
-        await loading.edit(embed=premium_embed(
-            "📝 ADDED TO QUEUE",
-            f"**{song['title']}**\n📌 Position: `{len(queues[server_id])}`",
-            COLORS['info']
-        ))
+        await update.message.reply_text(caption, parse_mode='Markdown')
 
-# ----- SONG VIDEO COMMAND -----
-@bot.command(name='video', aliases=['v', 'watchsong'])
-async def song_video(ctx, *, query):
-    """📺 Get song video link - !video song name"""
-    
-    loading = await ctx.send(embed=premium_embed("🔍 SEARCHING", f"Finding video for `{query}`...", COLORS['info']))
-    
-    video = await get_song_video(query)
-    
-    if not video:
-        await loading.edit(embed=premium_embed("❌ ERROR", "Video not found!", COLORS['error']))
+async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = ' '.join(context.args)
+    if not query:
+        await update.message.reply_text("❌ *Usage:* `/watch Movie Name Year`", parse_mode='Markdown')
         return
     
-    await loading.delete()
-    
-    duration = f"{video['duration']//60}:{video['duration']%60:02d}" if video['duration'] else "Unknown"
-    
-    embed = premium_embed(
-        f"🎬 {video['title'][:100]}",
-        f"**📺 Watch in High Quality:**\n🔗 {video['url']}\n\n"
-        f"**Details:**\n⏱️ Duration: `{duration}`\n👤 Uploader: `{video['uploader']}`\n👁️ Views: `{video['views']:,}`\n❤️ Likes: `{video['likes']:,}`\n📹 Quality: `{video['quality']}`",
-        COLORS['video'],
-        thumbnail=video['thumbnail']
-    )
-    
-    # Add audio option button
-    view = View()
-    audio_btn = Button(label="🎵 PLAY AUDIO ONLY", style=discord.ButtonStyle.success, emoji="🔊", custom_id="audio")
-    
-    async def audio_callback(interaction):
-        embed2 = premium_embed(
-            "🎵 AUDIO COMMAND",
-            f"Use `!play {video['title'][:50]}` to play audio in voice channel!",
-            COLORS['music']
-        )
-        await interaction.response.send_message(embed=embed2, ephemeral=True)
-    
-    audio_btn.callback = audio_callback
-    view.add_item(audio_btn)
-    
-    await ctx.send(embed=embed, view=view)
-
-# ----- MOVIE INFO + VIDEO COMMAND -----
-@bot.command(name='movie', aliases=['film', 'm'])
-async def movie_info(ctx, *, query):
-    """🎬 Get movie info + watch links - !movie name year"""
-    
     parts = query.rsplit(' ', 1)
-    year = None
-    movie_name = query
+    year = parts[1] if len(parts) > 1 and parts[1].isdigit() else None
+    movie_name = parts[0] if year else query
     
-    if len(parts) > 1 and parts[1].isdigit() and 1900 <= int(parts[1]) <= 2026:
-        year = parts[1]
-        movie_name = parts[0]
-    
-    loading = await ctx.send(embed=premium_embed("🔍 SEARCHING", f"Finding `{movie_name}`...", COLORS['info']))
+    msg = await update.message.reply_text(f"🔍 *Getting links for:* `{movie_name}`...", parse_mode='Markdown')
     
     movie = await get_movie_info(movie_name, year)
     
     if not movie:
-        await loading.edit(embed=premium_embed("❌ ERROR", "Movie not found! Try different name.", COLORS['error']))
+        await msg.edit_text(f"❌ *Movie not found:* `{query}`", parse_mode='Markdown')
         return
     
-    await loading.delete()
-    
-    embed = premium_embed(
-        f"🎬 {movie['title']} ({movie['year']})",
-        f"*{movie['overview'][:300]}...*\n\n"
-        f"⭐ **Rating:** `{movie['rating']}/10` {movie['stars']}\n"
-        f"⏱️ **Runtime:** `{movie['runtime']}` min\n"
-        f"🎭 **Genres:** `{'`, `'.join(movie['genres'][:3])}`\n"
-        f"📅 **Released:** `{movie['year']}`",
-        COLORS['movie'],
-        thumbnail=movie['poster'],
-        image=movie['backdrop']
+    streams = (
+        f"🎬 *{movie['title']} ({movie['year']})* - *HD LINKS*\n\n"
+        f"**Source 1 (4K):**\n`https://vidsrc.to/embed/movie/{movie['id']}`\n\n"
+        f"**Source 2 (1080p):**\n`https://www.2embed.to/embed/tmdb/movie/{movie['id']}`\n\n"
+        f"⭐ *Rating:* {movie['rating']}/10 {movie['stars']}\n"
+        f"💡 *Click link to watch in browser*"
     )
     
-    view = MovieButtons(movie['id'], movie['title'], movie['year'])
-    await ctx.send(embed=embed, view=view)
+    await msg.delete()
+    
+    if movie['poster']:
+        await update.message.reply_photo(photo=movie['poster'], caption=streams, parse_mode='Markdown')
+    else:
+        await update.message.reply_text(streams, parse_mode='Markdown')
 
-# ----- MOVIE ONLY WATCH COMMAND -----
-@bot.command(name='watch', aliases=['w', 'stream'])
-async def movie_watch(ctx, *, query):
-    """📺 Get direct movie streaming links - !watch movie name year"""
-    
-    parts = query.rsplit(' ', 1)
-    year = None
-    movie_name = query
-    
-    if len(parts) > 1 and parts[1].isdigit():
-        year = parts[1]
-        movie_name = parts[0]
-    
-    loading = await ctx.send(embed=premium_embed("🔍 SEARCHING", f"Getting streaming links for `{movie_name}`...", COLORS['info']))
-    
-    movie = await get_movie_info(movie_name, year)
-    
-    if not movie:
-        await loading.edit(embed=premium_embed("❌ ERROR", "Movie not found!", COLORS['error']))
+# ============== MAIN ==============
+async def main():
+    if not TELEGRAM_TOKEN:
+        print("❌ TELEGRAM_BOT_TOKEN not set!")
         return
     
-    streams, youtube_links = await get_movie_video(movie['id'], movie['title'], movie['year'])
+    app = Application.builder().token(TELEGRAM_TOKEN).build()
     
-    await loading.delete()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("audio", audio_command))
+    app.add_handler(CommandHandler("video", video_command))
+    app.add_handler(CommandHandler("movie", movie_command))
+    app.add_handler(CommandHandler("watch", watch_command))
     
-    description = "**🎥 HD STREAMING LINKS (4K/1080p):**\n\n" + "\n".join(streams)
-    if youtube_links:
-        description += "\n**📺 YOUTUBE FULL MOVIE:**\n\n" + "\n".join(youtube_links)
+    print("✅ Bot is running on Railway!")
+    print(f"📁 Temp folder: {DOWNLOAD_FOLDER}")
     
-    embed = premium_embed(
-        f"📺 {movie['title']} ({movie['year']}) - WATCH ONLINE",
-        description[:4000],
-        COLORS['video'],
-        thumbnail=movie['poster']
-    )
-    
-    await ctx.send(embed=embed)
+    await app.run_polling()
 
-# ----- QUEUE COMMANDS -----
-@bot.command(name='skip')
-async def skip(ctx):
-    if ctx.voice_client and ctx.voice_client.is_playing():
-        ctx.voice_client.stop()
-        await ctx.send(embed=premium_embed("⏭️ SKIPPED", "Current song skipped!", COLORS['info']))
-
-@bot.command(name='pause')
-async def pause(ctx):
-    if ctx.voice_client and ctx.voice_client.is_playing():
-        ctx.voice_client.pause()
-        await ctx.send(embed=premium_embed("⏸️ PAUSED", "Use `!resume` to continue", COLORS['info']))
-
-@bot.command(name='resume')
-async def resume(ctx):
-    if ctx.voice_client and ctx.voice_client.is_paused():
-        ctx.voice_client.resume()
-        await ctx.send(embed=premium_embed("▶️ RESUMED", "Playback continued", COLORS['success']))
-
-@bot.command(name='stop', aliases=['dc'])
-async def stop(ctx):
-    if ctx.voice_client:
-        if ctx.guild.id in queues:
-            queues[ctx.guild.id].clear()
-        await ctx.voice_client.disconnect()
-        await ctx.send(embed=premium_embed("👋 DISCONNECTED", "Queue cleared! Bye bye!", COLORS['success']))
-
-@bot.command(name='queue', aliases=['q'])
-async def show_queue(ctx):
-    server_id = ctx.guild.id
-    if server_id not in queues or not queues[server_id]:
-        await ctx.send(embed=premium_embed("📭 QUEUE EMPTY", "No songs in queue!", COLORS['info']))
-        return
-    
-    queue_list = queues[server_id][:10]
-    queue_text = "\n".join([f"{i+1}. {song['title'][:50]}" for i, song in enumerate(queue_list)])
-    
-    await ctx.send(embed=premium_embed("📋 SONG QUEUE", queue_text, COLORS['info']))
-
-# ----- HELP COMMAND -----
-@bot.command(name='help', aliases=['h', 'commands'])
-async def help_command(ctx):
-    embed = premium_embed(
-        "🎯 ULTIMATE BOT - ALL COMMANDS",
-        "**🎵 SONG COMMANDS**\n"
-        "`!play <song>` - Play audio in voice channel\n"
-        "`!video <song>` - Get YouTube video link\n\n"
-        
-        "**🎬 MOVIE COMMANDS**\n"
-        "`!movie <name> <year>` - Get info + watch links\n"
-        "`!watch <name> <year>` - Direct streaming links\n\n"
-        
-        "**🎮 QUEUE CONTROLS**\n"
-        "`!skip` - Skip current song\n"
-        "`!pause/resume` - Playback control\n"
-        "`!stop` - Stop and disconnect\n"
-        "`!queue` - Show queue\n\n"
-        
-        "**📋 EXAMPLES**\n"
-        "`!play Believer` - Audio only\n"
-        "`!video Believer` - Video link\n"
-        "`!movie Inception 2010` - Movie info\n"
-        "`!watch Avengers 2019` - Direct stream",
-        COLORS['success']
-    )
-    await ctx.send(embed=embed)
-
-# ============== RUN BOT ==============
 if __name__ == "__main__":
-    TOKEN = os.getenv('DISCORD_TOKEN')
-    if not TOKEN:
-        print("❌ ERROR: Set DISCORD_TOKEN in .env file!")
-    else:
-        bot.run(TOKEN)
+    asyncio.run(main())
