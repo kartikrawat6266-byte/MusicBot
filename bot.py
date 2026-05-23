@@ -4,23 +4,19 @@ import yt_dlp
 import aiohttp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-from dotenv import load_dotenv
 import tempfile
 import shutil
 
-load_dotenv()
-
-# ============== TOKENS ==============
-TELEGRAM_TOKEN = os.getenv('8867495388:AAHRhMzEyjM_29dykChsDlBlSBa4aRigteE')
-TMDB_API_KEY = os.getenv('dd704eb8a6d78d77566aea8269a44f37')
+# ============== YOUR TOKENS (Already Added) ==============
+TELEGRAM_TOKEN = "8867495388:AAHRhMzEyjM_29dykChsDlBlSBa4aRigteE"
+TMDB_API_KEY = "dd704eb8a6d78d77566aea8269a44f37"
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
-# ============== TEMP FOLDER FOR RAILWAY ==============
-# Railway has limited storage, use temp folder
+# ============== TEMP FOLDER ==============
 DOWNLOAD_FOLDER = tempfile.mkdtemp()
 print(f"📁 Download folder: {DOWNLOAD_FOLDER}")
 
-# Audio download options (lower quality for faster download)
+# ============== YT-DLP OPTIONS ==============
 YDL_AUDIO = {
     'format': 'bestaudio/best',
     'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
@@ -28,7 +24,7 @@ YDL_AUDIO = {
     'no_warnings': True,
     'extract_audio': True,
     'audio_format': 'mp3',
-    'audio_quality': '128',  # Lower quality for faster download
+    'audio_quality': '128',
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
@@ -36,15 +32,14 @@ YDL_AUDIO = {
     }]
 }
 
-# Video download options (lowest quality for Railway)
 YDL_VIDEO = {
-    'format': 'worst[ext=mp4]',  # Smallest size for Railway
+    'format': 'worst[ext=mp4]',
     'outtmpl': f'{DOWNLOAD_FOLDER}/%(title)s.%(ext)s',
     'quiet': True,
     'no_warnings': True,
 }
 
-# ============== SONG AUDIO ==============
+# ============== SONG FUNCTIONS ==============
 async def download_audio(query):
     try:
         with yt_dlp.YoutubeDL(YDL_AUDIO) as ydl:
@@ -61,14 +56,12 @@ async def download_audio(query):
                 'title': info.get('title', 'Song'),
                 'artist': info.get('uploader', 'Unknown'),
                 'duration': info.get('duration', 0),
-                'thumbnail': info.get('thumbnail', ''),
                 'video_url': f"https://youtube.com/watch?v={info['id']}"
             }
     except Exception as e:
         print(f"Audio Error: {e}")
         return None
 
-# ============== SONG VIDEO ==============
 async def download_video(query):
     try:
         with yt_dlp.YoutubeDL(YDL_VIDEO) as ydl:
@@ -92,11 +85,15 @@ async def download_video(query):
         print(f"Video Error: {e}")
         return None
 
-# ============== MOVIE INFO ==============
+# ============== MOVIE FUNCTIONS ==============
 async def get_movie_info(movie_name, year=None):
     async with aiohttp.ClientSession() as session:
         search_url = f"{TMDB_BASE_URL}/search/movie"
-        params = {'api_key': TMDB_API_KEY, 'query': movie_name, 'language': 'en-US'}
+        params = {
+            'api_key': TMDB_API_KEY,
+            'query': movie_name,
+            'language': 'en-US'
+        }
         if year:
             params['year'] = year
         
@@ -132,7 +129,6 @@ def cleanup(filepath):
     try:
         if os.path.exists(filepath):
             os.remove(filepath)
-            print(f"Cleaned: {filepath}")
     except:
         pass
 
@@ -141,19 +137,18 @@ def cleanup(filepath):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🎬 *✨ ULTIMATE MEDIA BOT ✨*\n\n"
-        "*Commands:*\n\n"
-        "🎵 *SONG COMMANDS*\n"
+        "*🎵 SONG COMMANDS*\n"
         "`/audio song name` - Send MP3 audio\n"
         "`/video song name` - Send MP4 video\n\n"
-        "🎬 *MOVIE COMMANDS*\n"
+        "*🎬 MOVIE COMMANDS*\n"
         "`/movie name year` - Movie info + poster\n"
         "`/watch name year` - HD streaming links\n\n"
         "*Examples:*\n"
         "`/audio Believer`\n"
-        "`/video Believer`\n"
+        "`/video Shape of You`\n"
         "`/movie Inception 2010`\n"
         "`/watch Avengers 2019`\n\n"
-        "⚡ *Powered by Railway*",
+        "⚡ *Bot is Active!*",
         parse_mode='Markdown'
     )
 
@@ -230,7 +225,7 @@ async def video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ *Usage:* `/movie Movie Name Year`", parse_mode='Markdown')
+        await update.message.reply_text("❌ *Usage:* `/movie Movie Name Year`\nExample: `/movie Inception 2010`", parse_mode='Markdown')
         return
     
     parts = query.rsplit(' ', 1)
@@ -264,7 +259,7 @@ async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ *Usage:* `/watch Movie Name Year`", parse_mode='Markdown')
+        await update.message.reply_text("❌ *Usage:* `/watch Movie Name Year`\nExample: `/watch Avengers 2019`", parse_mode='Markdown')
         return
     
     parts = query.rsplit(' ', 1)
@@ -281,10 +276,11 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     streams = (
         f"🎬 *{movie['title']} ({movie['year']})* - *HD LINKS*\n\n"
-        f"**Source 1 (4K):**\n`https://vidsrc.to/embed/movie/{movie['id']}`\n\n"
-        f"**Source 2 (1080p):**\n`https://www.2embed.to/embed/tmdb/movie/{movie['id']}`\n\n"
+        f"**🎥 Source 1 (4K):**\n`https://vidsrc.to/embed/movie/{movie['id']}`\n\n"
+        f"**🎬 Source 2 (1080p):**\n`https://www.2embed.to/embed/tmdb/movie/{movie['id']}`\n\n"
+        f"**📺 Source 3 (HD):**\n`https://movie-web.app/movie/{movie['id']}`\n\n"
         f"⭐ *Rating:* {movie['rating']}/10 {movie['stars']}\n"
-        f"💡 *Click link to watch in browser*"
+        f"💡 *Click any link to watch in browser*"
     )
     
     await msg.delete()
@@ -296,9 +292,9 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ============== MAIN ==============
 async def main():
-    if not TELEGRAM_TOKEN:
-        print("❌ TELEGRAM_BOT_TOKEN not set!")
-        return
+    print("✅ Starting Bot...")
+    print(f"🤖 Bot Token: {TELEGRAM_TOKEN[:10]}...")
+    print(f"🎬 TMDB Key: {TMDB_API_KEY[:10]}...")
     
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     
@@ -308,8 +304,8 @@ async def main():
     app.add_handler(CommandHandler("movie", movie_command))
     app.add_handler(CommandHandler("watch", watch_command))
     
-    print("✅ Bot is running on Railway!")
-    print(f"📁 Temp folder: {DOWNLOAD_FOLDER}")
+    print("✅ Bot is running!")
+    print("📁 Temp folder: " + DOWNLOAD_FOLDER)
     
     await app.run_polling()
 
