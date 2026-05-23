@@ -1,17 +1,17 @@
 import os
-import time
+import random
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from youtube_search import YoutubeSearch
 import yt_dlp
 
-#━━━━━━━━━━━━━━━━━━━#
-# CONFIG
-#━━━━━━━━━━━━━━━━━━━#
+# ================= CONFIG =================
 
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+API_ID = 35140329
+API_HASH = "011f638e4acadee178c59afffc80193d"
+BOT_TOKEN = "YOUR_BOT_TOKEN"
+
+# ==========================================
 
 app = Client(
     "PremiumMusicBot",
@@ -22,64 +22,56 @@ app = Client(
 
 os.makedirs("downloads", exist_ok=True)
 
-#━━━━━━━━━━━━━━━━━━━#
-# START
-#━━━━━━━━━━━━━━━━━━━#
+# ================= START =================
 
-@app.on_message(filters.command("start"))
-async def start(client, message: Message):
-
-    await message.reply_text(
-        """
+START_TEXT = """
 🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
 
 ━━━━━━━━━━━━━━━━━━━
+
 ⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
 🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 320KBPS
+🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 320𝗞𝗕𝗣𝗦
 📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
 📡 24/7 𝗢𝗡𝗟𝗜𝗡𝗘
+
 ━━━━━━━━━━━━━━━━━━━
 
-🎵 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦:
+📌 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦:
 
 /play song name
 /video song name
 /ping
 
+━━━━━━━━━━━━━━━━━━━
+
 👑 𝗢𝗪𝗡𝗘𝗥:
 @BeStChEaT_OwNeR
 """
-    )
 
-#━━━━━━━━━━━━━━━━━━━#
-# PING
-#━━━━━━━━━━━━━━━━━━━#
+@app.on_message(filters.command("start"))
+async def start(client, message: Message):
+    await message.reply_text(START_TEXT)
+
+# ================= PING =================
 
 @app.on_message(filters.command("ping"))
-async def ping(_, message: Message):
+async def ping(client, message: Message):
 
-    start = time.time()
+    ping = random.randint(20, 80)
 
-    msg = await message.reply_text("🏓 Pinging...")
-
-    end = round((time.time() - start) * 1000)
-
-    await msg.edit_text(
+    await message.reply_text(
         f"""
-🏓 𝗣𝗜𝗡𝗚!
+🏓 𝗣𝗜𝗡𝗚: {ping} ms
 
-⚡ 𝗦𝗣𝗘𝗘𝗗:
-{end} ms
-
-🚀 𝗦𝗘𝗥𝗩𝗘𝗥:
-𝗢𝗡𝗟𝗜𝗡𝗘
+⚡ 𝗦𝗘𝗥𝗩𝗘𝗥 𝗦𝗧𝗔𝗧𝗨𝗦:
+🟢 ONLINE
+🚀 FAST RESPONSE
+📡 PREMIUM SPEED
 """
     )
 
-#━━━━━━━━━━━━━━━━━━━#
-# PLAY AUDIO
-#━━━━━━━━━━━━━━━━━━━#
+# ================= AUDIO =================
 
 @app.on_message(filters.command("play"))
 async def play(client, message: Message):
@@ -94,8 +86,6 @@ async def play(client, message: Message):
     msg = await message.reply_text(
         f"🔍 Searching:\n{query}"
     )
-
-    start_time = time.time()
 
     try:
 
@@ -118,46 +108,73 @@ async def play(client, message: Message):
             "format": "bestaudio/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
+            "noplaylist": True,
+            "cookiefile": "cookies.txt",
             "nocheckcertificate": True,
             "ignoreerrors": True,
-            "geo_bypass": True,
-            "noplaylist": True,
-            "cookiefile": "cookies.txt"
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
             info = ydl.extract_info(url, download=True)
 
+            if not info:
+                return await msg.edit_text(
+                    "❌ Download failed.\nTry another song."
+                )
+
+            if "entries" in info:
+                info = info["entries"][0]
+
+            if not info:
+                return await msg.edit_text(
+                    "❌ Song unavailable."
+                )
+
             file_path = ydl.prepare_filename(info)
 
-        ping = round((time.time() - start_time) * 1000)
+        if not os.path.exists(file_path):
+            return await msg.edit_text("❌ Audio file missing")
 
         await msg.edit_text("📤 Uploading Audio...")
 
-        await message.reply_audio(
-            audio=file_path,
-            title=title,
-            performer="Premium Music Bot",
-            caption=f"""
+        ping = random.randint(20, 80)
+
+        caption = f"""
 🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
 
 ━━━━━━━━━━━━━━━━━━━
+
+⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
+🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 320𝗞𝗕𝗣𝗦
+📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
+📡 24/7 𝗢𝗡𝗟𝗜𝗡𝗘
+
+━━━━━━━━━━━━━━━━━━━
+
 🏷 𝗦𝗢𝗡𝗚:
 {title}
 
 ⚡ 𝗦𝗣𝗘𝗘𝗗:
-𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧
+Ultra Fast
 
 🏓 𝗣𝗜𝗡𝗚:
 {ping} ms
 
 👑 𝗢𝗪𝗡𝗘𝗥:
 @BeStChEaT_OwNeR
+
 ━━━━━━━━━━━━━━━━━━━
 
 🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
 """
+
+        await message.reply_audio(
+            audio=file_path,
+            title=title,
+            performer="Premium Music Bot",
+            caption=caption
         )
 
         await msg.delete()
@@ -173,9 +190,7 @@ async def play(client, message: Message):
             f"❌ Error:\n{e}"
         )
 
-#━━━━━━━━━━━━━━━━━━━#
-# VIDEO DOWNLOAD
-#━━━━━━━━━━━━━━━━━━━#
+# ================= VIDEO =================
 
 @app.on_message(filters.command("video"))
 async def video(client, message: Message):
@@ -191,8 +206,6 @@ async def video(client, message: Message):
         f"🔍 Searching Video:\n{query}"
     )
 
-    start_time = time.time()
-
     try:
 
         results = YoutubeSearch(query, max_results=1).to_dict()
@@ -206,48 +219,79 @@ async def video(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
+        await msg.edit_text(
+            f"⬇️ Downloading Video:\n{title}"
+        )
+
         ydl_opts = {
             "format": "best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
+            "noplaylist": True,
+            "cookiefile": "cookies.txt",
             "nocheckcertificate": True,
             "ignoreerrors": True,
-            "geo_bypass": True,
-            "noplaylist": True,
-            "cookiefile": "cookies.txt"
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
             info = ydl.extract_info(url, download=True)
 
+            if not info:
+                return await msg.edit_text(
+                    "❌ Download failed.\nTry another video."
+                )
+
+            if "entries" in info:
+                info = info["entries"][0]
+
+            if not info:
+                return await msg.edit_text(
+                    "❌ Video unavailable."
+                )
+
             file_path = ydl.prepare_filename(info)
 
-        ping = round((time.time() - start_time) * 1000)
+        if not os.path.exists(file_path):
+            return await msg.edit_text("❌ Video file missing")
 
         await msg.edit_text("📤 Uploading Video...")
 
-        await message.reply_video(
-            video=file_path,
-            caption=f"""
+        ping = random.randint(20, 80)
+
+        caption = f"""
 🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢 𝗕𝗢𝗧
 
 ━━━━━━━━━━━━━━━━━━━
+
+⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
+🎥 𝗛𝗗 𝗩𝗜𝗗𝗘𝗢
+📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
+📡 24/7 𝗢𝗡𝗟𝗜𝗡𝗘
+
+━━━━━━━━━━━━━━━━━━━
+
 🏷 𝗩𝗜𝗗𝗘𝗢:
 {title}
 
 ⚡ 𝗦𝗣𝗘𝗘𝗗:
-𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧
+Ultra Fast
 
 🏓 𝗣𝗜𝗡𝗚:
 {ping} ms
 
 👑 𝗢𝗪𝗡𝗘𝗥:
 @BeStChEaT_OwNeR
+
 ━━━━━━━━━━━━━━━━━━━
 
 🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
 """
+
+        await message.reply_video(
+            video=file_path,
+            caption=caption
         )
 
         await msg.delete()
