@@ -2,19 +2,20 @@ import os
 import asyncio
 import yt_dlp
 import aiohttp
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 import tempfile
-import shutil
 
-# ============== YOUR TOKENS (Already Added) ==============
+# ============== YOUR TOKENS ==============
 TELEGRAM_TOKEN = "8867495388:AAHRhMzEyjM_29dykChsDlBlSBa4aRigteE"
 TMDB_API_KEY = "dd704eb8a6d78d77566aea8269a44f37"
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
-# ============== TEMP FOLDER ==============
+# ============== SETUP ==============
 DOWNLOAD_FOLDER = tempfile.mkdtemp()
 print(f"📁 Download folder: {DOWNLOAD_FOLDER}")
+print(f"🤖 Bot Token: {TELEGRAM_TOKEN[:15]}...")
+print(f"🎬 TMDB Key: {TMDB_API_KEY[:15]}...")
 
 # ============== YT-DLP OPTIONS ==============
 YDL_AUDIO = {
@@ -39,7 +40,7 @@ YDL_VIDEO = {
     'no_warnings': True,
 }
 
-# ============== SONG FUNCTIONS ==============
+# ============== FUNCTIONS ==============
 async def download_audio(query):
     try:
         with yt_dlp.YoutubeDL(YDL_AUDIO) as ydl:
@@ -56,7 +57,6 @@ async def download_audio(query):
                 'title': info.get('title', 'Song'),
                 'artist': info.get('uploader', 'Unknown'),
                 'duration': info.get('duration', 0),
-                'video_url': f"https://youtube.com/watch?v={info['id']}"
             }
     except Exception as e:
         print(f"Audio Error: {e}")
@@ -79,21 +79,15 @@ async def download_video(query):
                 'artist': info.get('uploader', 'Unknown'),
                 'duration': info.get('duration', 0),
                 'size_mb': file_size,
-                'video_url': f"https://youtube.com/watch?v={info['id']}"
             }
     except Exception as e:
         print(f"Video Error: {e}")
         return None
 
-# ============== MOVIE FUNCTIONS ==============
 async def get_movie_info(movie_name, year=None):
     async with aiohttp.ClientSession() as session:
         search_url = f"{TMDB_BASE_URL}/search/movie"
-        params = {
-            'api_key': TMDB_API_KEY,
-            'query': movie_name,
-            'language': 'en-US'
-        }
+        params = {'api_key': TMDB_API_KEY, 'query': movie_name, 'language': 'en-US'}
         if year:
             params['year'] = year
         
@@ -124,7 +118,6 @@ async def get_movie_info(movie_name, year=None):
                     'poster': f"https://image.tmdb.org/t/p/w500{details.get('poster_path', '')}" if details.get('poster_path') else None
                 }
 
-# ============== CLEANUP ==============
 def cleanup(filepath):
     try:
         if os.path.exists(filepath):
@@ -132,14 +125,13 @@ def cleanup(filepath):
     except:
         pass
 
-# ============== BOT COMMANDS ==============
-
+# ============== COMMANDS ==============
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🎬 *✨ ULTIMATE MEDIA BOT ✨*\n\n"
         "*🎵 SONG COMMANDS*\n"
-        "`/audio song name` - Send MP3 audio\n"
-        "`/video song name` - Send MP4 video\n\n"
+        "`/audio song` - Send MP3 audio\n"
+        "`/video song` - Send MP4 video\n\n"
         "*🎬 MOVIE COMMANDS*\n"
         "`/movie name year` - Movie info + poster\n"
         "`/watch name year` - HD streaming links\n\n"
@@ -155,21 +147,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def audio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ *Usage:* `/audio song name`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Usage: `/audio song name`", parse_mode='Markdown')
         return
     
-    msg = await update.message.reply_text(f"🎵 *Downloading:* `{query}`...\n⏳ Please wait...", parse_mode='Markdown')
+    msg = await update.message.reply_text(f"🎵 Downloading: `{query}`... Please wait...")
     
     song = await download_audio(query)
     
     if not song or not os.path.exists(song['file']):
-        await msg.edit_text("❌ *Error:* Song not found!", parse_mode='Markdown')
+        await msg.edit_text("❌ Song not found!")
         return
     
     duration = f"{song['duration']//60}:{song['duration']%60:02d}"
     file_size = os.path.getsize(song['file']) / (1024 * 1024)
     
-    await msg.edit_text(f"📤 *Uploading...* ({file_size:.1f} MB)")
+    await msg.edit_text(f"📤 Uploading... ({file_size:.1f} MB)")
     
     try:
         with open(song['file'], 'rb') as audio_file:
@@ -178,74 +170,72 @@ async def audio_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 title=song['title'][:100],
                 performer=song['artist'],
                 duration=song['duration'],
-                caption=f"🎵 *{song['title'][:50]}*\n👤 {song['artist']}\n⏱️ {duration}\n📦 {file_size:.1f} MB",
-                parse_mode='Markdown'
+                caption=f"🎵 {song['title'][:50]}\n👤 {song['artist']}\n⏱️ {duration}"
             )
         await msg.delete()
         cleanup(song['file'])
     except Exception as e:
-        await msg.edit_text(f"❌ *Error:* {str(e)[:100]}", parse_mode='Markdown')
+        await msg.edit_text(f"❌ Error: {str(e)[:100]}")
         cleanup(song['file'])
 
 async def video_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ *Usage:* `/video song name`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Usage: `/video song name`", parse_mode='Markdown')
         return
     
-    msg = await update.message.reply_text(f"🎬 *Downloading video:* `{query}`...\n⏳ Please wait...", parse_mode='Markdown')
+    msg = await update.message.reply_text(f"🎬 Downloading video: `{query}`... Please wait...")
     
     video = await download_video(query)
     
     if not video or not os.path.exists(video['file']):
-        await msg.edit_text("❌ *Error:* Video not found!", parse_mode='Markdown')
+        await msg.edit_text("❌ Video not found!")
         return
     
     duration = f"{video['duration']//60}:{video['duration']%60:02d}"
     
-    await msg.edit_text(f"📤 *Uploading video...* ({video['size_mb']:.1f} MB)")
+    await msg.edit_text(f"📤 Uploading video... ({video['size_mb']:.1f} MB)")
     
     try:
         if video['size_mb'] <= 50:
             with open(video['file'], 'rb') as video_file:
                 await update.message.reply_video(
                     video=video_file,
-                    caption=f"🎬 *{video['title'][:100]}*\n👤 {video['artist']}\n⏱️ {duration}\n📦 {video['size_mb']:.1f} MB",
-                    parse_mode='Markdown'
+                    caption=f"🎬 {video['title'][:100]}\n👤 {video['artist']}\n⏱️ {duration}"
                 )
             await msg.delete()
         else:
-            await msg.edit_text(f"⚠️ *Video too large!* ({video['size_mb']:.1f} MB)\n📺 [Watch on YouTube]({video['video_url']})", parse_mode='Markdown')
+            await msg.edit_text(f"⚠️ Video too large! ({video['size_mb']:.1f} MB)")
         
         cleanup(video['file'])
     except Exception as e:
-        await msg.edit_text(f"❌ *Error:* {str(e)[:100]}", parse_mode='Markdown')
+        await msg.edit_text(f"❌ Error: {str(e)[:100]}")
         cleanup(video['file'])
 
 async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ *Usage:* `/movie Movie Name Year`\nExample: `/movie Inception 2010`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Usage: `/movie Movie Name Year`")
         return
     
     parts = query.rsplit(' ', 1)
     year = parts[1] if len(parts) > 1 and parts[1].isdigit() else None
     movie_name = parts[0] if year else query
     
-    msg = await update.message.reply_text(f"🔍 *Searching:* `{movie_name}`...", parse_mode='Markdown')
+    msg = await update.message.reply_text(f"🔍 Searching: `{movie_name}`...")
     
     movie = await get_movie_info(movie_name, year)
     
     if not movie:
-        await msg.edit_text(f"❌ *Movie not found:* `{query}`", parse_mode='Markdown')
+        await msg.edit_text(f"❌ Movie not found: `{query}`")
         return
     
     caption = (
         f"🎬 *{movie['title']} ({movie['year']})*\n\n"
-        f"⭐ *Rating:* {movie['rating']}/10 {movie['stars']}\n"
-        f"⏱️ *Runtime:* {movie['runtime']} min\n"
-        f"🎭 *Genres:* `{'`, `'.join(movie['genres'][:3])}`\n\n"
-        f"📝 *Overview:* {movie['overview'][:300]}...\n\n"
+        f"⭐ Rating: {movie['rating']}/10 {movie['stars']}\n"
+        f"⏱️ Runtime: {movie['runtime']} min\n"
+        f"🎭 Genres: {', '.join(movie['genres'][:3])}\n\n"
+        f"📝 Overview: {movie['overview'][:300]}...\n\n"
         f"📺 `/watch {movie['title']} {movie['year']}`"
     )
     
@@ -259,28 +249,27 @@ async def movie_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = ' '.join(context.args)
     if not query:
-        await update.message.reply_text("❌ *Usage:* `/watch Movie Name Year`\nExample: `/watch Avengers 2019`", parse_mode='Markdown')
+        await update.message.reply_text("❌ Usage: `/watch Movie Name Year`")
         return
     
     parts = query.rsplit(' ', 1)
     year = parts[1] if len(parts) > 1 and parts[1].isdigit() else None
     movie_name = parts[0] if year else query
     
-    msg = await update.message.reply_text(f"🔍 *Getting links for:* `{movie_name}`...", parse_mode='Markdown')
+    msg = await update.message.reply_text(f"🔍 Getting links for: `{movie_name}`...")
     
     movie = await get_movie_info(movie_name, year)
     
     if not movie:
-        await msg.edit_text(f"❌ *Movie not found:* `{query}`", parse_mode='Markdown')
+        await msg.edit_text(f"❌ Movie not found: `{query}`")
         return
     
     streams = (
-        f"🎬 *{movie['title']} ({movie['year']})* - *HD LINKS*\n\n"
-        f"**🎥 Source 1 (4K):**\n`https://vidsrc.to/embed/movie/{movie['id']}`\n\n"
-        f"**🎬 Source 2 (1080p):**\n`https://www.2embed.to/embed/tmdb/movie/{movie['id']}`\n\n"
-        f"**📺 Source 3 (HD):**\n`https://movie-web.app/movie/{movie['id']}`\n\n"
-        f"⭐ *Rating:* {movie['rating']}/10 {movie['stars']}\n"
-        f"💡 *Click any link to watch in browser*"
+        f"🎬 *{movie['title']} ({movie['year']})* - HD LINKS\n\n"
+        f"**4K Quality:**\n`https://vidsrc.to/embed/movie/{movie['id']}`\n\n"
+        f"**1080p Quality:**\n`https://www.2embed.to/embed/tmdb/movie/{movie['id']}`\n\n"
+        f"⭐ Rating: {movie['rating']}/10 {movie['stars']}\n"
+        f"💡 Click link to watch in browser"
     )
     
     await msg.delete()
@@ -290,11 +279,9 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(streams, parse_mode='Markdown')
 
-# ============== MAIN ==============
-async def main():
-    print("✅ Starting Bot...")
-    print(f"🤖 Bot Token: {TELEGRAM_TOKEN[:10]}...")
-    print(f"🎬 TMDB Key: {TMDB_API_KEY[:10]}...")
+# ============== MAIN (FIXED FOR RAILWAY) ==============
+def main():
+    print("✅ Bot starting...")
     
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     
@@ -304,10 +291,10 @@ async def main():
     app.add_handler(CommandHandler("movie", movie_command))
     app.add_handler(CommandHandler("watch", watch_command))
     
-    print("✅ Bot is running!")
-    print("📁 Temp folder: " + DOWNLOAD_FOLDER)
+    print("✅ Bot is running! Send /start on Telegram")
     
-    await app.run_polling()
+    # Railway ke liye fix - run_polling directly
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
