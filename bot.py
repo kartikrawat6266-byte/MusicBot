@@ -58,37 +58,40 @@ async def play(_, message: Message):
         f"🔍 Searching:\n`{query}`"
     )
 
-    start_time = time.time()
-
-    try:
+    start_time = time.time() 
 
 try:
-    ydl_opts = {
-        "format": "best",
-        "outtmpl": "music.%(ext)s",
-        "quiet": True,
-        "noplaylist": True,
-        "default_search": "ytsearch1",
-        "cookiefile": "cookies.txt",
-        "geo_bypass": True
-    }
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": "music.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "default_search": "ytsearch1",
+            "cookiefile": "cookies.txt",
+            "geo_bypass": True,
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
+        }
 
-    with YoutubeDL(ydl_opts) as ydl:
+        with YoutubeDL(ydl_opts) as ydl:
 
-        info = ydl.extract_info(query, download=True)
+            info = ydl.extract_info(query, download=True)
 
-        if "entries" in info:
-            info = info["entries"][0]
+            if "entries" in info:
+                info = info["entries"][0]
 
-        title = info["title"]
-        file_path = ydl.prepare_filename(info)
+            title = info["title"]
+            file_path = "music.mp3"
 
-        ping = round((time.time() - start_time) * 1000)
+            ping = round((time.time() - start_time) * 1000)
 
-        await message.reply_audio(
-            audio=file_path,
-            title=title,
-            caption=f"""
+            await message.reply_audio(
+                audio=file_path,
+                title=title,
+                caption=f"""
 🎵 Download Complete
 
 ━━━━━━━━━━━━━━
@@ -102,17 +105,15 @@ try:
 @BeStChEaT_OwNeR
 ━━━━━━━━━━━━━━
 """
-        )
+            )
 
-        os.remove(file_path)
+            os.remove(file_path)
 
-        await searching.delete()
+            await searching.delete()
 
     except Exception as e:
-        await searching.edit_text(
-            f"❌ Error:\n`{e}`"
-        )
-
+        await searching.edit_text(f"❌ Error:\n{e}")
+        
 print("🎵 Music Bot Started!")
 
 bot.run()
