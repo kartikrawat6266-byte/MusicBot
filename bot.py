@@ -73,7 +73,7 @@ async def play(client, message: Message):
         )
 
         ydl_opts = {
-            "format": "140/bestaudio",
+            "format": "bestaudio/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
