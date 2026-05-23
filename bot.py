@@ -1,6 +1,7 @@
 # =========================
 # PREMIUM MUSIC BOT
 # FULL FIXED VERSION
+# REAL DOWNLOAD PROGRESS
 # =========================
 
 import os
@@ -144,19 +145,14 @@ HELP_TEXT = """
 
 ━━━━━━━━━━━━━━━━━━━
 
-🎵 𝗔𝗨𝗗𝗜𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗:
+🎵 AUDIO DOWNLOAD:
 `/play song name`
 
-📌 Example:
-`/play Alan Walker`
-
-━━━━━━━━━━━━━━━━━━━
-
-🎬 𝗩𝗜𝗗𝗘𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗:
+🎬 VIDEO DOWNLOAD:
 `/video song name`
 
-📌 Example:
-`/video Faded`
+📚 HELP:
+`/help`
 
 ━━━━━━━━━━━━━━━━━━━
 
@@ -164,6 +160,8 @@ HELP_TEXT = """
 • HQ Audio
 • HD Video
 • Ultra Fast Download
+• Live Download Progress
+• Live Ping
 • Instant Upload
 • 24/7 Online
 
@@ -348,10 +346,17 @@ async def users(client, query: CallbackQuery):
     for user_id, data in users.items():
 
         text += f"""
-👤 Name: {data['name']}
-🔗 Username: @{data['username']}
-🆔 ID: {user_id}
-📅 Joined: {data['join_time']}
+👤 NAME:
+{data['name']}
+
+🔗 USERNAME:
+@{data['username']}
+
+🆔 USER ID:
+{user_id}
+
+📅 JOINED:
+{data['join_time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
@@ -371,25 +376,21 @@ async def users(client, query: CallbackQuery):
     )
 
 # =========================
-# BAN INFO
+# BAN / UNBAN INFO
 # =========================
 
 @app.on_callback_query(filters.regex("ban_info"))
 async def ban_info(client, query: CallbackQuery):
 
     await query.message.edit_text(
-        "🚫 Use:\n`/ban user_id`"
+        "🚫 USE:\n`/ban user_id`"
     )
-
-# =========================
-# UNBAN INFO
-# =========================
 
 @app.on_callback_query(filters.regex("unban_info"))
 async def unban_info(client, query: CallbackQuery):
 
     await query.message.edit_text(
-        "✅ Use:\n`/unban user_id`"
+        "✅ USE:\n`/unban user_id`"
     )
 
 # =========================
@@ -406,8 +407,11 @@ async def banned_history(client, query: CallbackQuery):
     for user_id, data in banned.items():
 
         text += f"""
-🆔 ID: {user_id}
-📅 Time: {data['time']}
+🆔 USER ID:
+{user_id}
+
+📅 BANNED:
+{data['time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
@@ -426,14 +430,14 @@ async def ban(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Use:\n`/ban user_id`"
+            "❌ USE:\n`/ban user_id`"
         )
 
     user_id = int(message.command[1])
 
     if user_id == OWNER_ID:
         return await message.reply_text(
-            "❌ Owner cannot be banned."
+            "❌ OWNER CANNOT BE BANNED"
         )
 
     banned = load_banned()
@@ -447,7 +451,7 @@ async def ban(client, message: Message):
     save_banned(banned)
 
     await message.reply_text(
-        "🚫 User banned successfully."
+        "🚫 USER BANNED SUCCESSFULLY"
     )
 
     try:
@@ -470,7 +474,7 @@ async def unban(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Use:\n`/unban user_id`"
+            "❌ USE:\n`/unban user_id`"
         )
 
     user_id = int(message.command[1])
@@ -483,7 +487,7 @@ async def unban(client, message: Message):
     save_banned(banned)
 
     await message.reply_text(
-        "✅ User unbanned successfully."
+        "✅ USER UNBANNED SUCCESSFULLY"
     )
 
     try:
@@ -514,7 +518,7 @@ async def play(client, message: Message):
     start_time = time.time()
 
     msg = await message.reply_text(
-        f"🔍 Searching:\n{query}"
+        f"🔍 SEARCHING AUDIO...\n\n🎵 {query}"
     )
 
     try:
@@ -526,7 +530,7 @@ async def play(client, message: Message):
 
         if not results:
             return await msg.edit_text(
-                "❌ Song not found."
+                "❌ SONG NOT FOUND"
             )
 
         song = results[0]
@@ -560,22 +564,44 @@ async def play(client, message: Message):
                     '0MB/s'
                 )
 
+                percent = d.get(
+                    '_percent_str',
+                    '0%'
+                )
+
+                eta = d.get(
+                    '_eta_str',
+                    '0s'
+                )
+
+                ping = round(
+                    (time.time() - start_time) * 1000
+                )
+
                 app.loop.create_task(
                     update_progress(
                         f"""
-📥 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚 𝗔𝗨𝗗𝗜𝗢
+📥 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗔𝗨𝗗𝗜𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
 
 ━━━━━━━━━━━━━━━━━━━
 
-🎵 {title}
+🎵 SONG:
+{title}
 
-📦 {downloaded} / {total}
+📦 DOWNLOADED:
+{downloaded} / {total}
 
-⚡ Speed:
+📊 PROGRESS:
+{percent}
+
+⚡ SPEED:
 {speed}
 
-🏓 Ping:
-{round((time.time() - start_time) * 1000)} ms
+⏳ TIME LEFT:
+{eta}
+
+🏓 LIVE PING:
+{ping} ms
 
 ━━━━━━━━━━━━━━━━━━━
 👑 OWNER:
@@ -591,7 +617,13 @@ async def play(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
+            "retries": 10,
+            "fragment_retries": 10,
+            "extractor_retries": 10,
             "progress_hooks": [progress_hook],
+            "http_headers": {
+                "User-Agent": "com.google.android.youtube/17.36.4"
+            },
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
@@ -612,28 +644,25 @@ async def play(client, message: Message):
             (time.time() - start_time) * 1000
         )
 
-        await msg.edit_text(
-            "📤 Uploading Audio..."
-        )
-
         await message.reply_audio(
             audio=file_path,
             title=title,
             performer="Premium Music Bot",
             caption=f"""
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
+🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖
 
 ━━━━━━━━━━━━━━━━━━━
+
 🎵 SONG:
 {title}
 
-⚡ SPEED:
-Ultra Fast
+⚡ STATUS:
+DOWNLOADED
 
-🏓 PING:
+🏓 LIVE PING:
 {ping} ms
 
-📡 STATUS:
+📡 SERVER:
 ONLINE
 
 ━━━━━━━━━━━━━━━━━━━
@@ -649,10 +678,16 @@ ONLINE
         except:
             pass
 
-    except Exception:
+    except Exception as e:
+
+        print(e)
 
         await msg.edit_text(
-            "❌ YouTube temporary blocked request.\n\n🔄 Wait and try again."
+            """
+❌ YOUTUBE TEMPORARY BLOCK
+
+🔄 WAIT AND TRY AGAIN
+"""
         )
 
 # =========================
@@ -672,8 +707,10 @@ async def video(client, message: Message):
 
     query = " ".join(message.command[1:])
 
+    start_time = time.time()
+
     msg = await message.reply_text(
-        f"🔍 Searching:\n{query}"
+        f"🔍 SEARCHING VIDEO...\n\n🎬 {query}"
     )
 
     try:
@@ -685,7 +722,7 @@ async def video(client, message: Message):
 
         if not results:
             return await msg.edit_text(
-                "❌ Video not found."
+                "❌ VIDEO NOT FOUND"
             )
 
         song = results[0]
@@ -694,6 +731,77 @@ async def video(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
+        async def update_progress(text):
+            try:
+                await msg.edit_text(text)
+            except:
+                pass
+
+        def progress_hook(d):
+
+            if d['status'] == 'downloading':
+
+                downloaded = d.get(
+                    '_downloaded_bytes_str',
+                    '0MB'
+                )
+
+                total = d.get(
+                    '_total_bytes_str',
+                    'Unknown'
+                )
+
+                speed = d.get(
+                    '_speed_str',
+                    '0MB/s'
+                )
+
+                percent = d.get(
+                    '_percent_str',
+                    '0%'
+                )
+
+                eta = d.get(
+                    '_eta_str',
+                    '0s'
+                )
+
+                ping = round(
+                    (time.time() - start_time) * 1000
+                )
+
+                app.loop.create_task(
+                    update_progress(
+                        f"""
+📥 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+
+━━━━━━━━━━━━━━━━━━━
+
+🎬 VIDEO:
+{title}
+
+📦 DOWNLOADED:
+{downloaded} / {total}
+
+📊 PROGRESS:
+{percent}
+
+⚡ SPEED:
+{speed}
+
+⏳ TIME LEFT:
+{eta}
+
+🏓 LIVE PING:
+{ping} ms
+
+━━━━━━━━━━━━━━━━━━━
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
+                    )
+                )
+
         ydl_opts = {
             "format": "best[ext=mp4]/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
@@ -701,6 +809,13 @@ async def video(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
+            "retries": 10,
+            "fragment_retries": 10,
+            "extractor_retries": 10,
+            "progress_hooks": [progress_hook],
+            "http_headers": {
+                "User-Agent": "com.google.android.youtube/17.36.4"
+            },
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
@@ -717,16 +832,27 @@ async def video(client, message: Message):
 
             file_path = ydl.prepare_filename(info)
 
+        ping = round(
+            (time.time() - start_time) * 1000
+        )
+
         await message.reply_video(
             video=file_path,
             caption=f"""
 🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢
 
 ━━━━━━━━━━━━━━━━━━━
+
 🎥 VIDEO:
 {title}
 
-📡 STATUS:
+⚡ STATUS:
+DOWNLOADED
+
+🏓 LIVE PING:
+{ping} ms
+
+📡 SERVER:
 ONLINE
 
 ━━━━━━━━━━━━━━━━━━━
@@ -742,10 +868,16 @@ ONLINE
         except:
             pass
 
-    except Exception:
+    except Exception as e:
+
+        print(e)
 
         await msg.edit_text(
-            "❌ YouTube temporary blocked request.\n\n🔄 Wait and try again."
+            """
+❌ YOUTUBE TEMPORARY BLOCK
+
+🔄 WAIT AND TRY AGAIN
+"""
         )
 
 print("✅ Premium Music Bot Running")
