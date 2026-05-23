@@ -1,4 +1,3 @@
-import asyncio
 import os
 import time
 from pyrogram import Client, filters
@@ -6,10 +5,12 @@ from pyrogram.types import Message
 from youtubesearchpython import VideosSearch
 import yt_dlp
 
-API_ID = int(os.getenv("35140329"))
-API_HASH = os.getenv("011f638e4acadee178c59afffc80193d")
-BOT_TOKEN = os.getenv("8917775888:AAHvVcNK1RG7ty6bR7OIRmCSGJcKAPWjirw")
+# VARIABLES
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+# BOT CLIENT
 bot = Client(
     "MusicBot",
     api_id=API_ID,
@@ -20,17 +21,22 @@ bot = Client(
 # START COMMAND
 @bot.on_message(filters.command("start"))
 async def start(_, message: Message):
+
     await message.reply_text(
         f"""
 🎵 **Premium Music Bot Active!**
 
-✨ Fast Download
-⚡ Ultra Speed
-📥 HQ Audio
-🏓 Ping System
-👑 Owner: @BeStChEaT_OwNeR
+━━━━━━━━━━━━━━
+⚡ Ultra Fast Download
+🎧 HQ Music
+📥 Instant Audio
+🏓 Live Ping
+👑 Owner:
+@BeStChEaT_OwNeR
+━━━━━━━━━━━━━━
 
-💡 Usage:
+💡 Commands:
+
 /play song name
 
 📌 Example:
@@ -49,30 +55,37 @@ async def play(_, message: Message):
 
     query = " ".join(message.command[1:])
 
-    msg = await message.reply_text(
-        f"🔍 Searching:\n`{query}`"
+    searching = await message.reply_text(
+        f"""
+🔍 Searching Song...
+
+🎵 Query:
+`{query}`
+"""
     )
 
     start_time = time.time()
 
     try:
-        # SEARCH SONG
+        # SEARCH VIDEO
         search = VideosSearch(query, limit=1)
         result = search.result()["result"][0]
 
         title = result["title"]
         url = result["link"]
 
-        await msg.edit_text(
+        await searching.edit_text(
             f"""
-🎧 Found Song
+🎧 Song Found!
 
-🏷 Name: {title}
-📥 Downloading...
+🏷 Title:
+`{title}`
+
+📥 Downloading Audio...
 """
         )
 
-        # DOWNLOAD OPTIONS
+        # YT-DLP OPTIONS
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": "music.%(ext)s",
@@ -81,7 +94,7 @@ async def play(_, message: Message):
             "cookiefile": "cookies.txt"
         }
 
-        # DOWNLOAD SONG
+        # DOWNLOAD AUDIO
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             file_path = ydl.prepare_filename(info)
@@ -95,19 +108,28 @@ async def play(_, message: Message):
             caption=f"""
 🎵 Download Complete
 
-🏷 Song: {title}
-⚡ Ping: {ping} ms
-👑 Powered By: @BeStChEaT_OwNeR
+━━━━━━━━━━━━━━
+🏷 Song:
+{title}
+
+⚡ Ping:
+{ping} ms
+
+👑 Owner:
+@BeStChEaT_OwNeR
+━━━━━━━━━━━━━━
 """
         )
 
         # DELETE FILE
         os.remove(file_path)
 
-        await msg.delete()
+        await searching.delete()
 
     except Exception as e:
-        await msg.edit_text(f"❌ Error:\n`{e}`")
+        await searching.edit_text(
+            f"❌ Error:\n`{e}`"
+        )
 
 print("🎵 Music Bot Started!")
 
