@@ -1,5 +1,6 @@
 # =========================
-# IMPORTS
+# PREMIUM MUSIC BOT
+# FULL FIXED VERSION
 # =========================
 
 import os
@@ -26,7 +27,21 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-OWNER_ID = 1987818347  # APNA TELEGRAM ID DAALO
+# 👇 APNA TELEGRAM ID DALO
+OWNER_ID = 1987818347
+
+# =========================
+# BOT
+# =========================
+
+app = Client(
+    "MusicBot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
+)
+
+os.makedirs("downloads", exist_ok=True)
 
 # =========================
 # FILES
@@ -35,20 +50,16 @@ OWNER_ID = 1987818347  # APNA TELEGRAM ID DAALO
 USERS_FILE = "users.json"
 BANNED_FILE = "banned.json"
 
-# =========================
-# CREATE FILES
-# =========================
-
 if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, "w") as f:
-        json.dump([], f)
+        json.dump({}, f)
 
 if not os.path.exists(BANNED_FILE):
     with open(BANNED_FILE, "w") as f:
         json.dump({}, f)
 
 # =========================
-# LOAD / SAVE
+# FUNCTIONS
 # =========================
 
 def load_users():
@@ -67,31 +78,37 @@ def save_banned(data):
     with open(BANNED_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-# =========================
-# CHECK BAN
-# =========================
-
 def is_banned(user_id):
+
+    if int(user_id) == OWNER_ID:
+        return False
 
     banned = load_banned()
 
     return str(user_id) in banned
 
-# =========================
-# BOT
-# =========================
+def save_user(user):
 
-app = Client(
-    "MusicBot",
-    api_id=API_ID,
-    api_hash=API_HASH,
-    bot_token=BOT_TOKEN
-)
+    users = load_users()
 
-os.makedirs("downloads", exist_ok=True)
+    user_id = str(user.id)
+
+    if user_id not in users:
+
+        join_time = datetime.now().strftime(
+            "%d-%m-%Y %I:%M:%S %p"
+        )
+
+        users[user_id] = {
+            "name": user.first_name,
+            "username": user.username if user.username else "No Username",
+            "join_time": join_time
+        }
+
+        save_users(users)
 
 # =========================
-# START TEXT
+# TEXTS
 # =========================
 
 START_TEXT = """
@@ -111,11 +128,74 @@ START_TEXT = """
 🎬 𝗩𝗜𝗗𝗘𝗢:
 `/video song name`
 
+📚 𝗛𝗘𝗟𝗣:
+`/help`
+
 📌 𝗘𝗫𝗔𝗠𝗣𝗟𝗘:
-`/play Golden Brown`
-`/video Alan Walker`
+`/play Alan Walker`
+`/video Faded`
 
 👑 𝗢𝗪𝗡𝗘𝗥:
+@BeStChEaT_OwNeR
+"""
+
+HELP_TEXT = """
+📚 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧 𝗛𝗘𝗟𝗣
+
+━━━━━━━━━━━━━━━━━━━
+
+🎵 𝗔𝗨𝗗𝗜𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗:
+`/play song name`
+
+📌 Example:
+`/play Alan Walker`
+
+━━━━━━━━━━━━━━━━━━━
+
+🎬 𝗩𝗜𝗗𝗘𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗:
+`/video song name`
+
+📌 Example:
+`/video Faded`
+
+━━━━━━━━━━━━━━━━━━━
+
+⚡ FEATURES:
+• HQ Audio
+• HD Video
+• Ultra Fast Download
+• Instant Upload
+• 24/7 Online
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
+
+BAN_TEXT = """
+🚫 𝗔𝗖𝗖𝗘𝗦𝗦 𝗕𝗟𝗢𝗖𝗞𝗘𝗗
+
+━━━━━━━━━━━━━━━━━━━
+❌ Your access has been suspended.
+
+📡 Premium security enabled.
+
+━━━━━━━━━━━━━━━━━━━
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
+
+UNBAN_TEXT = """
+✅ 𝗔𝗖𝗖𝗘𝗦𝗦 𝗥𝗘𝗦𝗧𝗢𝗥𝗘𝗗
+
+━━━━━━━━━━━━━━━━━━━
+🎉 You can use the bot again.
+
+⚡ Premium access restored.
+
+━━━━━━━━━━━━━━━━━━━
+👑 OWNER:
 @BeStChEaT_OwNeR
 """
 
@@ -126,61 +206,84 @@ START_TEXT = """
 @app.on_message(filters.command("start"))
 async def start(client, message: Message):
 
-    user_id = message.from_user.id
+    if is_banned(message.from_user.id):
+        return await message.reply_text(BAN_TEXT)
 
-    if is_banned(user_id):
-
-        return await message.reply_text(
-            """
-🚫 𝗔𝗖𝗖𝗘𝗦𝗦 𝗗𝗘𝗡𝗜𝗘𝗗
-
-❌ You are banned from using this bot.
-
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-        )
-
-    users = load_users()
-
-    exists = False
-
-    for u in users:
-
-        if u["id"] == user_id:
-            exists = True
-            break
-
-    if not exists:
-
-        local_time = datetime.utcnow().astimezone()
-
-        users.append(
-            {
-                "id": user_id,
-                "name": message.from_user.first_name,
-                "username": message.from_user.username,
-                "join_date": local_time.strftime("%d-%m-%Y"),
-                "join_time": local_time.strftime("%I:%M:%S %p")
-            }
-        )
-
-        save_users(users)
+    save_user(message.from_user)
 
     buttons = []
 
-    if user_id == OWNER_ID:
+    if message.from_user.id == OWNER_ID:
+        buttons.append([
+            InlineKeyboardButton(
+                "👑 AuRa KaRtiK CoNtRoL 👑",
+                callback_data="owner_panel"
+            )
+        ])
 
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    "👑 AuRa KaRtiK CoNtRoL 👑",
-                    callback_data="owner_panel"
-                )
-            ]
+    buttons.append([
+        InlineKeyboardButton(
+            "📚 Help",
+            callback_data="help"
         )
+    ])
 
     await message.reply_text(
+        START_TEXT,
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+# =========================
+# HELP
+# =========================
+
+@app.on_message(filters.command("help"))
+async def help_cmd(client, message: Message):
+
+    await message.reply_text(HELP_TEXT)
+
+@app.on_callback_query(filters.regex("help"))
+async def help_callback(client, query: CallbackQuery):
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "🏠 Main Menu",
+                callback_data="main_menu"
+            )
+        ]
+    ])
+
+    await query.message.edit_text(
+        HELP_TEXT,
+        reply_markup=buttons
+    )
+
+# =========================
+# MAIN MENU
+# =========================
+
+@app.on_callback_query(filters.regex("main_menu"))
+async def main_menu(client, query: CallbackQuery):
+
+    buttons = []
+
+    if query.from_user.id == OWNER_ID:
+        buttons.append([
+            InlineKeyboardButton(
+                "👑 AuRa KaRtiK CoNtRoL 👑",
+                callback_data="owner_panel"
+            )
+        ])
+
+    buttons.append([
+        InlineKeyboardButton(
+            "📚 Help",
+            callback_data="help"
+        )
+    ])
+
+    await query.message.edit_text(
         START_TEXT,
         reply_markup=InlineKeyboardMarkup(buttons)
     )
@@ -195,80 +298,40 @@ async def owner_panel(client, query: CallbackQuery):
     if query.from_user.id != OWNER_ID:
         return
 
-    text = """
-👑 𝗔𝗨𝗥𝗔 𝗞𝗔𝗥𝗧𝗜𝗞 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 👑
-
-━━━━━━━━━━━━━━━━━━━
-⚡ PREMIUM OWNER PANEL
-🚀 FULL USER CONTROL
-📊 LIVE USER HISTORY
-🛡 BAN / UNBAN SYSTEM
-━━━━━━━━━━━━━━━━━━━
-"""
-
-    buttons = [
+    buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "👥 USER HISTORY",
+                "👥 User History",
                 callback_data="users"
             )
         ],
-
         [
             InlineKeyboardButton(
-                "🚫 BAN USER",
+                "🚫 Ban User",
                 callback_data="ban_info"
             ),
-
             InlineKeyboardButton(
-                "✅ UNBAN USER",
+                "✅ Unban User",
                 callback_data="unban_info"
             )
         ],
-
         [
             InlineKeyboardButton(
-                "📜 BANNED HISTORY",
-                callback_data="banhistory"
+                "📜 Banned History",
+                callback_data="banned_history"
             )
         ],
-
         [
             InlineKeyboardButton(
-                "🏠 MAIN MENU",
-                callback_data="mainmenu"
+                "🏠 Main Menu",
+                callback_data="main_menu"
             )
         ]
-    ]
+    ])
 
     await query.message.edit_text(
-        text,
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-
-# =========================
-# MAIN MENU
-# =========================
-
-@app.on_callback_query(filters.regex("mainmenu"))
-async def mainmenu(client, query: CallbackQuery):
-
-    buttons = []
-
-    if query.from_user.id == OWNER_ID:
-
-        buttons.append(
-            [
-                InlineKeyboardButton(
-                    "👑 AuRa KaRtiK CoNtRoL 👑",
-                    callback_data="owner_panel"
-                )
-            ]
-        )
-
-    await query.message.edit_text(
-        START_TEXT,
-        reply_markup=InlineKeyboardMarkup(buttons)
+        "👑 𝗔𝘂𝗥𝗮 𝗞𝗮𝗥𝘁𝗶𝗞 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟",
+        reply_markup=buttons
     )
 
 # =========================
@@ -276,52 +339,35 @@ async def mainmenu(client, query: CallbackQuery):
 # =========================
 
 @app.on_callback_query(filters.regex("users"))
-async def users_data(client, query: CallbackQuery):
+async def users(client, query: CallbackQuery):
 
     users = load_users()
 
-    text = f"""
-👥 TOTAL USERS: {len(users)}
+    text = "👥 𝗨𝗦𝗘𝗥 𝗛𝗜𝗦𝗧𝗢𝗥𝗬\n\n"
 
-━━━━━━━━━━━━━━━━━━━
-"""
-
-    for u in users[-50:]:
-
-        username = u["username"]
-
-        if username:
-            username = f"@{username}"
-        else:
-            username = "No Username"
+    for user_id, data in users.items():
 
         text += f"""
-
-👤 NAME: {u['name']}
-📛 USERNAME: {username}
-🆔 ID: {u['id']}
-
-📅 JOINED DATE:
-{u['join_date']}
-
-⏰ JOINED TIME:
-{u['join_time']}
+👤 Name: {data['name']}
+🔗 Username: @{data['username']}
+🆔 ID: {user_id}
+📅 Joined: {data['join_time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
 
-    buttons = [
+    buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "⬅️ BACK",
+                "⬅️ Back",
                 callback_data="owner_panel"
             )
         ]
-    ]
+    ])
 
     await query.message.edit_text(
-        text,
-        reply_markup=InlineKeyboardMarkup(buttons)
+        text[:4000],
+        reply_markup=buttons
     )
 
 # =========================
@@ -331,9 +377,8 @@ async def users_data(client, query: CallbackQuery):
 @app.on_callback_query(filters.regex("ban_info"))
 async def ban_info(client, query: CallbackQuery):
 
-    await query.answer(
-        "Use: /ban user_id",
-        show_alert=True
+    await query.message.edit_text(
+        "🚫 Use:\n`/ban user_id`"
     )
 
 # =========================
@@ -343,184 +388,134 @@ async def ban_info(client, query: CallbackQuery):
 @app.on_callback_query(filters.regex("unban_info"))
 async def unban_info(client, query: CallbackQuery):
 
-    await query.answer(
-        "Use: /unban user_id",
-        show_alert=True
+    await query.message.edit_text(
+        "✅ Use:\n`/unban user_id`"
     )
-
-# =========================
-# BAN USER
-# =========================
-
-@app.on_message(filters.command("ban") & filters.user(OWNER_ID))
-async def ban_user(client, message: Message):
-
-    if len(message.command) < 2:
-
-        return await message.reply_text(
-            "❌ Usage:\n/ban user_id"
-        )
-
-    user_id = message.command[1]
-
-    banned = load_banned()
-
-    banned[user_id] = {
-        "ban_date": datetime.utcnow().astimezone().strftime("%d-%m-%Y"),
-        "ban_time": datetime.utcnow().astimezone().strftime("%I:%M:%S %p")
-    }
-
-    save_banned(banned)
-
-    try:
-
-        await app.send_message(
-            int(user_id),
-            """
-🚫 𝗬𝗢𝗨 𝗛𝗔𝗩𝗘 𝗕𝗘𝗘𝗡 𝗕𝗔𝗡𝗡𝗘𝗗
-
-━━━━━━━━━━━━━━━━━━━
-❌ Access Removed
-🛡 Premium Security Active
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-        )
-
-    except:
-        pass
-
-    await message.reply_text(
-        "✅ USER BANNED SUCCESSFULLY"
-    )
-
-# =========================
-# UNBAN USER
-# =========================
-
-@app.on_message(filters.command("unban") & filters.user(OWNER_ID))
-async def unban_user(client, message: Message):
-
-    if len(message.command) < 2:
-
-        return await message.reply_text(
-            "❌ Usage:\n/unban user_id"
-        )
-
-    user_id = message.command[1]
-
-    banned = load_banned()
-
-    if user_id in banned:
-
-        del banned[user_id]
-
-        save_banned(banned)
-
-        try:
-
-            await app.send_message(
-                int(user_id),
-                """
-✅ 𝗬𝗢𝗨 𝗛𝗔𝗩𝗘 𝗕𝗘𝗘𝗡 𝗨𝗡𝗕𝗔𝗡𝗡𝗘𝗗
-
-━━━━━━━━━━━━━━━━━━━
-🎉 Access Restored
-⚡ Premium Features Enabled
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-            )
-
-        except:
-            pass
-
-        await message.reply_text(
-            "✅ USER UNBANNED SUCCESSFULLY"
-        )
-
-    else:
-
-        await message.reply_text(
-            "❌ USER NOT FOUND"
-        )
 
 # =========================
 # BANNED HISTORY
 # =========================
 
-@app.on_callback_query(filters.regex("banhistory"))
-async def ban_history(client, query: CallbackQuery):
+@app.on_callback_query(filters.regex("banned_history"))
+async def banned_history(client, query: CallbackQuery):
 
     banned = load_banned()
 
-    text = f"""
-🚫 TOTAL BANNED USERS: {len(banned)}
-
-━━━━━━━━━━━━━━━━━━━
-"""
-
-    if not banned:
-
-        text += "\n❌ No banned users"
+    text = "📜 𝗕𝗔𝗡𝗡𝗘𝗗 𝗨𝗦𝗘𝗥𝗦\n\n"
 
     for user_id, data in banned.items():
 
         text += f"""
-
-🆔 USER ID:
-{user_id}
-
-📅 BANNED DATE:
-{data['ban_date']}
-
-⏰ BANNED TIME:
-{data['ban_time']}
+🆔 ID: {user_id}
+📅 Time: {data['time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
 
-    buttons = [
-        [
-            InlineKeyboardButton(
-                "⬅️ BACK",
-                callback_data="owner_panel"
-            )
-        ]
-    ]
-
-    await query.message.edit_text(
-        text,
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+    await query.message.edit_text(text[:4000])
 
 # =========================
-# PLAY AUDIO
+# BAN
+# =========================
+
+@app.on_message(filters.command("ban"))
+async def ban(client, message: Message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if len(message.command) < 2:
+        return await message.reply_text(
+            "❌ Use:\n`/ban user_id`"
+        )
+
+    user_id = int(message.command[1])
+
+    if user_id == OWNER_ID:
+        return await message.reply_text(
+            "❌ Owner cannot be banned."
+        )
+
+    banned = load_banned()
+
+    banned[str(user_id)] = {
+        "time": datetime.now().strftime(
+            "%d-%m-%Y %I:%M:%S %p"
+        )
+    }
+
+    save_banned(banned)
+
+    await message.reply_text(
+        "🚫 User banned successfully."
+    )
+
+    try:
+        await client.send_message(
+            user_id,
+            BAN_TEXT
+        )
+    except:
+        pass
+
+# =========================
+# UNBAN
+# =========================
+
+@app.on_message(filters.command("unban"))
+async def unban(client, message: Message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if len(message.command) < 2:
+        return await message.reply_text(
+            "❌ Use:\n`/unban user_id`"
+        )
+
+    user_id = int(message.command[1])
+
+    banned = load_banned()
+
+    if str(user_id) in banned:
+        del banned[str(user_id)]
+
+    save_banned(banned)
+
+    await message.reply_text(
+        "✅ User unbanned successfully."
+    )
+
+    try:
+        await client.send_message(
+            user_id,
+            UNBAN_TEXT
+        )
+    except:
+        pass
+
+# =========================
+# AUDIO
 # =========================
 
 @app.on_message(filters.command("play"))
 async def play(client, message: Message):
 
     if is_banned(message.from_user.id):
-        return
+        return await message.reply_text(BAN_TEXT)
 
     if len(message.command) < 2:
-
         return await message.reply_text(
-            "❌ 𝗘𝘅𝗮𝗺𝗽𝗹𝗲:\n/play Alan Walker"
+            "❌ Example:\n`/play Alan Walker`"
         )
 
     query = " ".join(message.command[1:])
 
-    msg = await message.reply_text(
-        f"🔍 𝗦𝗲𝗮𝗿𝗰𝗵𝗶𝗻𝗴 𝗔𝘂𝗱𝗶𝗼...\n\n🎵 {query}"
-    )
-
     start_time = time.time()
+
+    msg = await message.reply_text(
+        f"🔍 Searching:\n{query}"
+    )
 
     try:
 
@@ -530,9 +525,8 @@ async def play(client, message: Message):
         ).to_dict()
 
         if not results:
-
             return await msg.edit_text(
-                "❌ 𝗦𝗼𝗻𝗴 𝗡𝗼𝘁 𝗙𝗼𝘂𝗻𝗱"
+                "❌ Song not found."
             )
 
         song = results[0]
@@ -541,9 +535,54 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        await msg.edit_text(
-            f"⬇️ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗔𝘂𝗱𝗶𝗼...\n\n🎵 {title}"
-        )
+        async def update_progress(text):
+            try:
+                await msg.edit_text(text)
+            except:
+                pass
+
+        def progress_hook(d):
+
+            if d['status'] == 'downloading':
+
+                downloaded = d.get(
+                    '_downloaded_bytes_str',
+                    '0MB'
+                )
+
+                total = d.get(
+                    '_total_bytes_str',
+                    'Unknown'
+                )
+
+                speed = d.get(
+                    '_speed_str',
+                    '0MB/s'
+                )
+
+                app.loop.create_task(
+                    update_progress(
+                        f"""
+📥 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗𝗜𝗡𝗚 𝗔𝗨𝗗𝗜𝗢
+
+━━━━━━━━━━━━━━━━━━━
+
+🎵 {title}
+
+📦 {downloaded} / {total}
+
+⚡ Speed:
+{speed}
+
+🏓 Ping:
+{round((time.time() - start_time) * 1000)} ms
+
+━━━━━━━━━━━━━━━━━━━
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
+                    )
+                )
 
         ydl_opts = {
             "format": "bestaudio/best",
@@ -552,6 +591,7 @@ async def play(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
+            "progress_hooks": [progress_hook],
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
@@ -572,34 +612,33 @@ async def play(client, message: Message):
             (time.time() - start_time) * 1000
         )
 
+        await msg.edit_text(
+            "📤 Uploading Audio..."
+        )
+
         await message.reply_audio(
             audio=file_path,
             title=title,
             performer="Premium Music Bot",
             caption=f"""
 🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
-━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 𝟯𝟮𝟬𝗞𝗕𝗣𝗦
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
-📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
-━━━━━━━━━━━━━━━━━━━
 
-🏷 𝗦𝗢𝗡𝗚:
+━━━━━━━━━━━━━━━━━━━
+🎵 SONG:
 {title}
 
-⚡ 𝗦𝗣𝗘𝗘𝗗:
+⚡ SPEED:
 Ultra Fast
 
-🏓 𝗣𝗜𝗡𝗚:
+🏓 PING:
 {ping} ms
 
-👑 𝗢𝗪𝗡𝗘𝗥:
-@BeStChEaT_OwNeR
+📡 STATUS:
+ONLINE
 
 ━━━━━━━━━━━━━━━━━━━
-🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
+👑 OWNER:
+@BeStChEaT_OwNeR
 """
         )
 
@@ -610,10 +649,10 @@ Ultra Fast
         except:
             pass
 
-    except Exception as e:
+    except Exception:
 
         await msg.edit_text(
-            f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{e}"
+            "❌ YouTube temporary blocked request.\n\n🔄 Wait and try again."
         )
 
 # =========================
@@ -624,21 +663,18 @@ Ultra Fast
 async def video(client, message: Message):
 
     if is_banned(message.from_user.id):
-        return
+        return await message.reply_text(BAN_TEXT)
 
     if len(message.command) < 2:
-
         return await message.reply_text(
-            "❌ 𝗘𝘅𝗮𝗺𝗽𝗹𝗲:\n/video Alan Walker"
+            "❌ Example:\n`/video Faded`"
         )
 
     query = " ".join(message.command[1:])
 
     msg = await message.reply_text(
-        f"🔍 𝗦𝗲𝗮𝗿𝗰𝗵𝗶𝗻𝗴 𝗩𝗶𝗱𝗲𝗼...\n\n🎬 {query}"
+        f"🔍 Searching:\n{query}"
     )
-
-    start_time = time.time()
 
     try:
 
@@ -648,9 +684,8 @@ async def video(client, message: Message):
         ).to_dict()
 
         if not results:
-
             return await msg.edit_text(
-                "❌ 𝗩𝗶𝗱𝗲𝗼 𝗡𝗼𝘁 𝗙𝗼𝘂𝗻𝗱"
+                "❌ Video not found."
             )
 
         song = results[0]
@@ -658,10 +693,6 @@ async def video(client, message: Message):
         title = song["title"]
 
         url = f"https://youtube.com/watch?v={song['id']}"
-
-        await msg.edit_text(
-            f"⬇️ 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱𝗶𝗻𝗴 𝗩𝗶𝗱𝗲𝗼...\n\n🎬 {title}"
-        )
 
         ydl_opts = {
             "format": "best[ext=mp4]/best",
@@ -686,36 +717,21 @@ async def video(client, message: Message):
 
             file_path = ydl.prepare_filename(info)
 
-        ping = round(
-            (time.time() - start_time) * 1000
-        )
-
         await message.reply_video(
             video=file_path,
             caption=f"""
-🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢 𝗕𝗢𝗧
-━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎥 𝗙𝗨𝗟𝗟 𝗛𝗗 𝗩𝗜𝗗𝗘𝗢
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
-📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
-━━━━━━━━━━━━━━━━━━━
+🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢
 
-🏷 𝗩𝗜𝗗𝗘𝗢:
+━━━━━━━━━━━━━━━━━━━
+🎥 VIDEO:
 {title}
 
-⚡ 𝗦𝗣𝗘𝗘𝗗:
-Ultra Fast
-
-🏓 𝗣𝗜𝗡𝗚:
-{ping} ms
-
-👑 𝗢𝗪𝗡𝗘𝗥:
-@BeStChEaT_OwNeR
+📡 STATUS:
+ONLINE
 
 ━━━━━━━━━━━━━━━━━━━
-🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
+👑 OWNER:
+@BeStChEaT_OwNeR
 """
         )
 
@@ -726,15 +742,11 @@ Ultra Fast
         except:
             pass
 
-    except Exception as e:
+    except Exception:
 
         await msg.edit_text(
-            f"❌ 𝗘𝗿𝗿𝗼𝗿:\n{e}"
+            "❌ YouTube temporary blocked request.\n\n🔄 Wait and try again."
         )
-
-# =========================
-# RUN
-# =========================
 
 print("✅ Premium Music Bot Running")
 
