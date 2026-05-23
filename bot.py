@@ -2,11 +2,13 @@
 # PREMIUM MUSIC BOT
 # FULL FIXED VERSION
 # REAL DOWNLOAD PROGRESS
+# YOUTUBE ERROR FIXED
 # =========================
 
 import os
 import time
 import json
+import asyncio
 from datetime import datetime
 
 from pyrogram import Client, filters
@@ -28,7 +30,6 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# 👇 APNA TELEGRAM ID DALO
 OWNER_ID = 1987818347
 
 # =========================
@@ -119,36 +120,32 @@ START_TEXT = """
 ⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
 🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
 🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 + 𝗩𝗜𝗗𝗘𝗢
-📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
+📥 𝗟𝗜𝗩𝗘 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
 📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
 ━━━━━━━━━━━━━━━━━━━
 
-🎵 𝗔𝗨𝗗𝗜𝗢:
+🎵 AUDIO:
 `/play song name`
 
-🎬 𝗩𝗜𝗗𝗘𝗢:
+🎬 VIDEO:
 `/video song name`
 
-📚 𝗛𝗘𝗟𝗣:
+📚 HELP:
 `/help`
 
-📌 𝗘𝗫𝗔𝗠𝗣𝗟𝗘:
-`/play Alan Walker`
-`/video Faded`
-
-👑 𝗢𝗪𝗡𝗘𝗥:
+👑 OWNER:
 @BeStChEaT_OwNeR
 """
 
 HELP_TEXT = """
-📚 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧 𝗛𝗘𝗟𝗣
+📚 PREMIUM MUSIC BOT HELP
 
 ━━━━━━━━━━━━━━━━━━━
 
-🎵 AUDIO DOWNLOAD:
+🎵 AUDIO:
 `/play song name`
 
-🎬 VIDEO DOWNLOAD:
+🎬 VIDEO:
 `/video song name`
 
 📚 HELP:
@@ -159,7 +156,7 @@ HELP_TEXT = """
 ⚡ FEATURES:
 • HQ Audio
 • HD Video
-• Ultra Fast Download
+• Live Download Speed
 • Live Download Progress
 • Live Ping
 • Instant Upload
@@ -172,27 +169,21 @@ HELP_TEXT = """
 """
 
 BAN_TEXT = """
-🚫 𝗔𝗖𝗖𝗘𝗦𝗦 𝗕𝗟𝗢𝗖𝗞𝗘𝗗
+🚫 ACCESS BLOCKED
 
 ━━━━━━━━━━━━━━━━━━━
-❌ Your access has been suspended.
+❌ Your access suspended.
 
-📡 Premium security enabled.
-
-━━━━━━━━━━━━━━━━━━━
 👑 OWNER:
 @BeStChEaT_OwNeR
 """
 
 UNBAN_TEXT = """
-✅ 𝗔𝗖𝗖𝗘𝗦𝗦 𝗥𝗘𝗦𝗧𝗢𝗥𝗘𝗗
+✅ ACCESS RESTORED
 
 ━━━━━━━━━━━━━━━━━━━
-🎉 You can use the bot again.
+🎉 You can use bot again.
 
-⚡ Premium access restored.
-
-━━━━━━━━━━━━━━━━━━━
 👑 OWNER:
 @BeStChEaT_OwNeR
 """
@@ -214,7 +205,7 @@ async def start(client, message: Message):
     if message.from_user.id == OWNER_ID:
         buttons.append([
             InlineKeyboardButton(
-                "👑 AuRa KaRtiK CoNtRoL 👑",
+                "👑 OWNER PANEL",
                 callback_data="owner_panel"
             )
         ])
@@ -238,7 +229,19 @@ async def start(client, message: Message):
 @app.on_message(filters.command("help"))
 async def help_cmd(client, message: Message):
 
-    await message.reply_text(HELP_TEXT)
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "🏠 Main Menu",
+                callback_data="main_menu"
+            )
+        ]
+    ])
+
+    await message.reply_text(
+        HELP_TEXT,
+        reply_markup=buttons
+    )
 
 @app.on_callback_query(filters.regex("help"))
 async def help_callback(client, query: CallbackQuery):
@@ -269,7 +272,7 @@ async def main_menu(client, query: CallbackQuery):
     if query.from_user.id == OWNER_ID:
         buttons.append([
             InlineKeyboardButton(
-                "👑 AuRa KaRtiK CoNtRoL 👑",
+                "👑 OWNER PANEL",
                 callback_data="owner_panel"
             )
         ])
@@ -299,23 +302,23 @@ async def owner_panel(client, query: CallbackQuery):
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "👥 User History",
+                "👥 Users",
                 callback_data="users"
             )
         ],
         [
             InlineKeyboardButton(
-                "🚫 Ban User",
+                "🚫 Ban",
                 callback_data="ban_info"
             ),
             InlineKeyboardButton(
-                "✅ Unban User",
+                "✅ Unban",
                 callback_data="unban_info"
             )
         ],
         [
             InlineKeyboardButton(
-                "📜 Banned History",
+                "📜 Banned",
                 callback_data="banned_history"
             )
         ],
@@ -328,12 +331,12 @@ async def owner_panel(client, query: CallbackQuery):
     ])
 
     await query.message.edit_text(
-        "👑 𝗔𝘂𝗥𝗮 𝗞𝗮𝗥𝘁𝗶𝗞 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟",
+        "👑 OWNER CONTROL PANEL",
         reply_markup=buttons
     )
 
 # =========================
-# USER HISTORY
+# USERS
 # =========================
 
 @app.on_callback_query(filters.regex("users"))
@@ -341,7 +344,7 @@ async def users(client, query: CallbackQuery):
 
     users = load_users()
 
-    text = "👥 𝗨𝗦𝗘𝗥 𝗛𝗜𝗦𝗧𝗢𝗥𝗬\n\n"
+    text = "👥 USER HISTORY\n\n"
 
     for user_id, data in users.items():
 
@@ -352,11 +355,94 @@ async def users(client, query: CallbackQuery):
 🔗 USERNAME:
 @{data['username']}
 
+🆔 ID:
+{user_id}
+
+📅 JOIN TIME:
+{data['join_time']}
+
+━━━━━━━━━━━━━━━━━━━
+"""
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="owner_panel"
+            ),
+            InlineKeyboardButton(
+                "🏠 Main Menu",
+                callback_data="main_menu"
+            )
+        ]
+    ])
+
+    await query.message.edit_text(
+        text[:4000],
+        reply_markup=buttons
+    )
+
+# =========================
+# BAN INFO
+# =========================
+
+@app.on_callback_query(filters.regex("ban_info"))
+async def ban_info(client, query: CallbackQuery):
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="owner_panel"
+            )
+        ]
+    ])
+
+    await query.message.edit_text(
+        "🚫 USE:\n`/ban user_id`",
+        reply_markup=buttons
+    )
+
+# =========================
+# UNBAN INFO
+# =========================
+
+@app.on_callback_query(filters.regex("unban_info"))
+async def unban_info(client, query: CallbackQuery):
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="owner_panel"
+            )
+        ]
+    ])
+
+    await query.message.edit_text(
+        "✅ USE:\n`/unban user_id`",
+        reply_markup=buttons
+    )
+
+# =========================
+# BANNED USERS
+# =========================
+
+@app.on_callback_query(filters.regex("banned_history"))
+async def banned_history(client, query: CallbackQuery):
+
+    banned = load_banned()
+
+    text = "📜 BANNED USERS\n\n"
+
+    for user_id, data in banned.items():
+
+        text += f"""
 🆔 USER ID:
 {user_id}
 
-📅 JOINED:
-{data['join_time']}
+📅 BANNED:
+{data['time']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
@@ -374,49 +460,6 @@ async def users(client, query: CallbackQuery):
         text[:4000],
         reply_markup=buttons
     )
-
-# =========================
-# BAN / UNBAN INFO
-# =========================
-
-@app.on_callback_query(filters.regex("ban_info"))
-async def ban_info(client, query: CallbackQuery):
-
-    await query.message.edit_text(
-        "🚫 USE:\n`/ban user_id`"
-    )
-
-@app.on_callback_query(filters.regex("unban_info"))
-async def unban_info(client, query: CallbackQuery):
-
-    await query.message.edit_text(
-        "✅ USE:\n`/unban user_id`"
-    )
-
-# =========================
-# BANNED HISTORY
-# =========================
-
-@app.on_callback_query(filters.regex("banned_history"))
-async def banned_history(client, query: CallbackQuery):
-
-    banned = load_banned()
-
-    text = "📜 𝗕𝗔𝗡𝗡𝗘𝗗 𝗨𝗦𝗘𝗥𝗦\n\n"
-
-    for user_id, data in banned.items():
-
-        text += f"""
-🆔 USER ID:
-{user_id}
-
-📅 BANNED:
-{data['time']}
-
-━━━━━━━━━━━━━━━━━━━
-"""
-
-    await query.message.edit_text(text[:4000])
 
 # =========================
 # BAN
@@ -454,14 +497,6 @@ async def ban(client, message: Message):
         "🚫 USER BANNED SUCCESSFULLY"
     )
 
-    try:
-        await client.send_message(
-            user_id,
-            BAN_TEXT
-        )
-    except:
-        pass
-
 # =========================
 # UNBAN
 # =========================
@@ -489,14 +524,6 @@ async def unban(client, message: Message):
     await message.reply_text(
         "✅ USER UNBANNED SUCCESSFULLY"
     )
-
-    try:
-        await client.send_message(
-            user_id,
-            UNBAN_TEXT
-        )
-    except:
-        pass
 
 # =========================
 # AUDIO
@@ -581,7 +608,7 @@ async def play(client, message: Message):
                 app.loop.create_task(
                     update_progress(
                         f"""
-📥 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗔𝗨𝗗𝗜𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+📥 PREMIUM AUDIO DOWNLOAD
 
 ━━━━━━━━━━━━━━━━━━━
 
@@ -617,16 +644,21 @@ async def play(client, message: Message):
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "retries": 10,
-            "fragment_retries": 10,
-            "extractor_retries": 10,
+            "retries": 15,
+            "fragment_retries": 15,
+            "extractor_retries": 15,
+            "skip_unavailable_fragments": True,
             "progress_hooks": [progress_hook],
+
             "http_headers": {
-                "User-Agent": "com.google.android.youtube/17.36.4"
+                "User-Agent": (
+                    "Mozilla/5.0 (Linux; Android 13)"
+                )
             },
+
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android"]
+                    "player_client": ["android", "web"]
                 }
             }
         }
@@ -644,22 +676,23 @@ async def play(client, message: Message):
             (time.time() - start_time) * 1000
         )
 
+        await msg.edit_text(
+            "📤 UPLOADING AUDIO..."
+        )
+
         await message.reply_audio(
             audio=file_path,
             title=title,
             performer="Premium Music Bot",
             caption=f"""
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖
+🎧 PREMIUM MUSIC
 
 ━━━━━━━━━━━━━━━━━━━
 
 🎵 SONG:
 {title}
 
-⚡ STATUS:
-DOWNLOADED
-
-🏓 LIVE PING:
+🏓 PING:
 {ping} ms
 
 📡 SERVER:
@@ -683,11 +716,7 @@ ONLINE
         print(e)
 
         await msg.edit_text(
-            """
-❌ YOUTUBE TEMPORARY BLOCK
-
-🔄 WAIT AND TRY AGAIN
-"""
+            f"❌ ERROR:\n{e}"
         )
 
 # =========================
@@ -773,7 +802,7 @@ async def video(client, message: Message):
                 app.loop.create_task(
                     update_progress(
                         f"""
-📥 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+📥 PREMIUM VIDEO DOWNLOAD
 
 ━━━━━━━━━━━━━━━━━━━
 
@@ -803,22 +832,27 @@ async def video(client, message: Message):
                 )
 
         ydl_opts = {
-            "format": "best[ext=mp4]/best",
+            "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "retries": 10,
-            "fragment_retries": 10,
-            "extractor_retries": 10,
+            "retries": 15,
+            "fragment_retries": 15,
+            "extractor_retries": 15,
+            "skip_unavailable_fragments": True,
             "progress_hooks": [progress_hook],
+
             "http_headers": {
-                "User-Agent": "com.google.android.youtube/17.36.4"
+                "User-Agent": (
+                    "Mozilla/5.0 (Linux; Android 13)"
+                )
             },
+
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android"]
+                    "player_client": ["android", "web"]
                 }
             }
         }
@@ -836,20 +870,21 @@ async def video(client, message: Message):
             (time.time() - start_time) * 1000
         )
 
+        await msg.edit_text(
+            "📤 UPLOADING VIDEO..."
+        )
+
         await message.reply_video(
             video=file_path,
             caption=f"""
-🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢
+🎬 PREMIUM VIDEO
 
 ━━━━━━━━━━━━━━━━━━━
 
 🎥 VIDEO:
 {title}
 
-⚡ STATUS:
-DOWNLOADED
-
-🏓 LIVE PING:
+🏓 PING:
 {ping} ms
 
 📡 SERVER:
@@ -873,11 +908,7 @@ ONLINE
         print(e)
 
         await msg.edit_text(
-            """
-❌ YOUTUBE TEMPORARY BLOCK
-
-🔄 WAIT AND TRY AGAIN
-"""
+            f"❌ ERROR:\n{e}"
         )
 
 print("✅ Premium Music Bot Running")
