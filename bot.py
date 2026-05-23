@@ -62,7 +62,7 @@ async def play(_, message: Message):
 
     try:
         ydl_opts = {
-            "format": "bestaudio",
+            "format": None,
             "outtmpl": "%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
@@ -72,6 +72,8 @@ async def play(_, message: Message):
             "extract_flat": False,
             "nocheckcertificate": True,
             "ignoreerrors": False,
+            "youtube_include_dash_manifest": False,
+            "youtube_include_hls_manifest": False,
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
