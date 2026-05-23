@@ -94,21 +94,20 @@ async def play(client, message: Message):
             f"⬇️ Downloading Audio...\n\n🎵 {title}"
         )
 
+        # =========================
+        # FIXED ERROR
+        # =========================
+
         ydl_opts = {
-    "format": "bestaudio[ext=m4a]/bestaudio/best",
-    "outtmpl": "downloads/%(title)s.%(ext)s",
-    "quiet": True,
-    "noplaylist": True,
-    "geo_bypass": True,
-    "nocheckcertificate": True,
-    "extractaudio": True,
-    "audioformat": "mp3",
-    "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": "mp3",
-        "preferredquality": "320",
-    }]
-}
+            "format": "bestaudio/best",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "extract_flat": False,
+            "cookiefile": None
+        }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -127,16 +126,29 @@ async def play(client, message: Message):
             title=title,
             performer="Premium Music Bot",
             caption=f"""
-🎵 PREMIUM AUDIO DOWNLOADED
+🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧
+━━━━━━━━━━━━━━━━━━━
+⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
+🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢
+📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
+📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
+━━━━━━━━━━━━━━━━━━━
 
-━━━━━━━━━━━━━━━
-🏷 Title: {title}
+🏷 𝗦𝗢𝗡𝗚:
+{title}
 
-⚡ Speed: Ultra Fast
-📡 Ping: {ping} ms
-🎧 Quality: HQ Audio
-👑 Status: Premium
-━━━━━━━━━━━━━━━
+⚡ 𝗦𝗣𝗘𝗘𝗗:
+Ultra Fast
+
+🏓 𝗣𝗜𝗡𝗚:
+{ping} ms
+
+👑 𝗢𝗪𝗡𝗘𝗥:
+@BeStChEaT_OwNeR
+
+━━━━━━━━━━━━━━━━━━━
+🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
 """
         )
 
@@ -190,14 +202,19 @@ async def video(client, message: Message):
             f"⬇️ Downloading Video...\n\n🎬 {title}"
         )
 
-ydl_opts = {
-    "format": "best[ext=mp4]/best",
-    "outtmpl": "downloads/%(title)s.%(ext)s",
-    "quiet": True,
-    "noplaylist": True,
-    "geo_bypass": True,
-    "nocheckcertificate": True
-}
+        # =========================
+        # FIXED ERROR
+        # =========================
+
+        ydl_opts = {
+            "format": "best[ext=mp4]/best",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "extract_flat": False,
+            "cookiefile": None
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -215,16 +232,29 @@ ydl_opts = {
         await message.reply_video(
             video=file_path,
             caption=f"""
-🎬 PREMIUM VIDEO DOWNLOADED
+🎬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗩𝗜𝗗𝗘𝗢 𝗕𝗢𝗧
+━━━━━━━━━━━━━━━━━━━
+⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
+🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
+🎥 𝗛𝗗 𝗩𝗜𝗗𝗘𝗢
+📥 𝗜𝗡𝗦𝗧𝗔𝗡𝗧 𝗨𝗣𝗟𝗢𝗔𝗗
+📡 𝟮𝟰/𝟳 𝗢𝗡𝗟𝗜𝗡𝗘
+━━━━━━━━━━━━━━━━━━━
 
-━━━━━━━━━━━━━━━
-🏷 Title: {title}
+🏷 𝗩𝗜𝗗𝗘𝗢:
+{title}
 
-⚡ Speed: Ultra Fast
-📡 Ping: {ping} ms
-🎧 Quality: HD Video
-👑 Status: Premium
-━━━━━━━━━━━━━━━
+⚡ 𝗦𝗣𝗘𝗘𝗗:
+Ultra Fast
+
+🏓 𝗣𝗜𝗡𝗚:
+{ping} ms
+
+👑 𝗢𝗪𝗡𝗘𝗥:
+@BeStChEaT_OwNeR
+
+━━━━━━━━━━━━━━━━━━━
+🔥 𝗣𝗢𝗪𝗘𝗥𝗘𝗗 𝗕𝗬 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗦𝗘𝗥𝗩𝗘𝗥
 """
         )
 
