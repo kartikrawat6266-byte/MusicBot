@@ -51,6 +51,7 @@ os.makedirs("downloads", exist_ok=True)
 
 USERS_FILE = "users.json"
 BANNED_FILE = "banned.json"
+COOKIES_FILE = "cookies.txt"
 
 if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, "w") as f:
@@ -497,6 +498,14 @@ async def ban(client, message: Message):
         "🚫 USER BANNED SUCCESSFULLY"
     )
 
+    try:
+        await client.send_message(
+            user_id,
+            BAN_TEXT
+        )
+    except:
+        pass
+
 # =========================
 # UNBAN
 # =========================
@@ -524,6 +533,62 @@ async def unban(client, message: Message):
     await message.reply_text(
         "✅ USER UNBANNED SUCCESSFULLY"
     )
+
+    try:
+        await client.send_message(
+            user_id,
+            UNBAN_TEXT
+        )
+    except:
+        pass
+
+# =========================
+# YTDLP OPTIONS
+# =========================
+
+def get_ydl_opts(progress_hook, is_video=False):
+
+    fmt = (
+        "bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4"
+        if is_video else
+        "bestaudio[ext=m4a]/bestaudio/best"
+    )
+
+    opts = {
+        "format": fmt,
+        "outtmpl": "downloads/%(title)s.%(ext)s",
+        "quiet": True,
+        "noplaylist": True,
+        "geo_bypass": True,
+        "nocheckcertificate": True,
+        "retries": 30,
+        "fragment_retries": 30,
+        "extractor_retries": 30,
+        "skip_unavailable_fragments": True,
+        "progress_hooks": [progress_hook],
+
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Linux; Android 13)"
+            )
+        },
+
+        "extractor_args": {
+            "youtube": {
+                "player_client": [
+                    "android",
+                    "web",
+                    "tv_embedded"
+                ]
+            }
+        }
+    }
+
+    # cookies support
+    if os.path.exists(COOKIES_FILE):
+        opts["cookiefile"] = COOKIES_FILE
+
+    return opts
 
 # =========================
 # AUDIO
@@ -638,31 +703,7 @@ async def play(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio/best",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "retries": 20,
-            "fragment_retries": 20,
-            "extractor_retries": 20,
-            "skip_unavailable_fragments": True,
-            "progress_hooks": [progress_hook],
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0 (Linux; Android 13)"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"]
-                }
-            }
-        }
+        ydl_opts = get_ydl_opts(progress_hook)
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -833,31 +874,10 @@ async def video(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
-            "format": "best[ext=mp4]/best",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "retries": 20,
-            "fragment_retries": 20,
-            "extractor_retries": 20,
-            "skip_unavailable_fragments": True,
-            "progress_hooks": [progress_hook],
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0 (Linux; Android 13)"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"]
-                }
-            }
-        }
+        ydl_opts = get_ydl_opts(
+            progress_hook,
+            is_video=True
+        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
