@@ -14,62 +14,63 @@ TMDB_BASE_URL = "https://api.themoviedb.org/3"
 DOWNLOAD_FOLDER = tempfile.mkdtemp()
 print(f"📁 Download folder: {DOWNLOAD_FOLDER}")
 
-# ============== FIXED YT-DLP OPTIONS ==============
-def download_audio(song_name):
-    """Download audio from YouTube - Working version"""
-    try:
-        # Options for yt-dlp
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
-            'quiet': True,
-            'no_warnings': True,
-            'extract_audio': True,
-            'audio_format': 'mp3',
-            'audio_quality': '128',
-            'noplaylist': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '128',
-            }],
-        }
-        
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # Search for the song
-            search_query = f"ytsearch:{song_name}"
-            info = ydl.extract_info(search_query, download=True)
-            
-            # Get the first result
-            if 'entries' in info and len(info['entries']) > 0:
-                video = info['entries'][0]
+# ============== MULTI-STRATEGY SEARCH FUNCTION ==============
+def download_audio_fixed(song_name):
+    """Try multiple search strategies to find any song"""
+    
+    # Strategy 1: Exact match with quotes
+    search_queries = [
+        f'"{song_name}" audio',           # Exact match with quotes
+        f'"{song_name}" official audio',   # Official audio
+        song_name,                          # Direct search
+        f'{song_name} song',                # Add 'song'
+        f'{song_name} music video',         # Music video
+    ]
+    
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
+        'quiet': True,
+        'no_warnings': True,
+        'extract_audio': True,
+        'audio_format': 'mp3',
+        'audio_quality': '128',
+        'noplaylist': True,
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '128',
+        }],
+        'ignoreerrors': True,  # Don't crash on errors
+    }
+    
+    for search_query in search_queries:
+        try:
+            print(f"Trying: {search_query}")
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"ytsearch:{search_query}", download=True)
                 
-                # Get the filename
-                base_filename = ydl.prepare_filename(video)
-                mp3_filename = base_filename.rsplit('.', 1)[0] + '.mp3'
-                
-                # Check if file exists
-                if os.path.exists(mp3_filename):
-                    duration = video.get('duration', 0)
-                    if duration:
+                if 'entries' in info and len(info['entries']) > 0:
+                    video = info['entries'][0]
+                    base_filename = ydl.prepare_filename(video)
+                    mp3_filename = base_filename.rsplit('.', 1)[0] + '.mp3'
+                    
+                    if os.path.exists(mp3_filename):
+                        duration = video.get('duration', 0)
                         minutes = duration // 60
                         seconds = duration % 60
-                        duration_str = f"{minutes}:{seconds:02d}"
-                    else:
-                        duration_str = "Unknown"
-                    
-                    return {
-                        'file': mp3_filename,
-                        'title': video.get('title', song_name),
-                        'artist': video.get('uploader', 'Unknown'),
-                        'duration': duration_str,
-                        'duration_seconds': duration
-                    }
-        
-        return None
-    except Exception as e:
-        print(f"Download error: {e}")
-        return None
+                        return {
+                            'file': mp3_filename,
+                            'title': video.get('title', song_name),
+                            'artist': video.get('uploader', 'Unknown'),
+                            'duration': f"{minutes}:{seconds:02d}",
+                            'duration_seconds': duration
+                        }
+        except Exception as e:
+            print(f"Strategy failed: {e}")
+            continue
+    
+    return None
 
 # ============== MOVIE FUNCTIONS ==============
 async def get_movie_info(movie_name, year=None):
@@ -110,61 +111,51 @@ def cleanup(filepath):
     try:
         if os.path.exists(filepath):
             os.remove(filepath)
-            print(f"Cleaned: {filepath}")
     except:
         pass
 
 # ============== COMMANDS ==============
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "🎵 *✨ MUSIC & MOVIE BOT ✨*\n\n"
-        "*🎵 COMMANDS:*\n"
+        "🎵 *✨ MUSIC BOT ✨*\n\n"
+        "*🎵 COMMAND:*\n"
         "`/play song name` - Download MP3 audio\n\n"
-        "*🎬 MOVIE COMMANDS:*\n"
-        "`/movie name year` - Movie info + poster\n"
-        "`/watch name year` - HD streaming links\n\n"
         "*📝 EXAMPLES:*\n"
         "`/play Golden Brown`\n"
         "`/play Believer`\n"
-        "`/movie Inception 2010`\n"
-        "`/watch Avengers 2019`\n\n"
+        "`/play Shape of You`\n\n"
         "⚡ *Bot is Active!*\n"
-        "⏳ *Please wait 30-60 seconds for audio*",
+        "⏳ *Wait 30-60 seconds*",
         parse_mode='Markdown'
     )
 
 async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Download and send audio"""
     query = ' '.join(context.args)
     if not query:
         await update.message.reply_text(
             "❌ *Usage:* `/play song name`\n"
-            "*Example:* `/play Golden Brown`\n"
-            "*Example:* `/play Believer`",
+            "*Example:* `/play Golden Brown`",
             parse_mode='Markdown'
         )
         return
     
     status_msg = await update.message.reply_text(
-        f"🎵 *Searching & Downloading:* `{query}`...\n"
+        f"🎵 *Searching:* `{query}`...\n"
         f"⏳ *Please wait 30-60 seconds...*",
         parse_mode='Markdown'
     )
     
-    # Download audio
-    result = download_audio(query)
+    # Use the fixed download function
+    result = download_audio_fixed(query)
     
     if not result or not os.path.exists(result['file']):
         await status_msg.edit_text(
             f"❌ *Song not found:* `{query}`\n\n"
-            f"💡 *Try these:*\n"
+            f"💡 *Try these instead:*\n"
             f"• `/play {query} song`\n"
             f"• `/play {query} audio`\n"
             f"• `/play {query} official`\n\n"
-            f"✅ *Working examples:*\n"
-            f"• `/play Believer`\n"
-            f"• `/play Shape of You`\n"
-            f"• `/play Blinding Lights`",
+            f"✅ *Working:* `/play Believer`",
             parse_mode='Markdown'
         )
         return
@@ -172,13 +163,11 @@ async def play_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_size = os.path.getsize(result['file']) / (1024 * 1024)
     
     await status_msg.edit_text(
-        f"📤 *Uploading...* ({file_size:.1f} MB)\n"
-        f"⏳ *Please wait...*",
+        f"📤 *Uploading...* ({file_size:.1f} MB)",
         parse_mode='Markdown'
     )
     
     try:
-        # Send the audio file
         with open(result['file'], 'rb') as audio_file:
             await update.message.reply_audio(
                 audio=audio_file,
@@ -279,9 +268,6 @@ def main():
     print("=" * 50)
     print("🎵 MUSIC BOT STARTING...")
     print("=" * 50)
-    print(f"Bot Token: {TELEGRAM_TOKEN[:15]}...")
-    print(f"Download folder: {DOWNLOAD_FOLDER}")
-    print("=" * 50)
     
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     
@@ -290,9 +276,7 @@ def main():
     app.add_handler(CommandHandler("movie", movie_command))
     app.add_handler(CommandHandler("watch", watch_command))
     
-    print("✅ Bot is running! Send /start on Telegram")
-    print("=" * 50)
-    
+    print("✅ Bot is running!")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
