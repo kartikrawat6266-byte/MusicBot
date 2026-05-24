@@ -1,6 +1,5 @@
 pyrogram
 tgcrypto
-youtube-search
 yt-dlp
+youtube-search
 ffmpeg-python
-requests
