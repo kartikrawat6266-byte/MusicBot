@@ -593,26 +593,32 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-       ydl_opts = {
-         "format": "bestaudio/best",
+ydl_opts = {
+    "format": "bestaudio/best",
+    "outtmpl": "downloads/%(title)s.%(ext)s",
 
-         "outtmpl": "downloads/%(title)s.%(ext)s",
+    "cookiefile": "cookies.txt",
 
-          "cookiefile": "cookies.txt",
- 
-         "quiet": True,
-         "noplaylist": True,
+    "quiet": True,
+    "noplaylist": True,
+    "geo_bypass": True,
 
-         "geo_bypass": True,
-
-        "postprocessors": [{
+    "postprocessors": [{
         "key": "FFmpegExtractAudio",
         "preferredcodec": "mp3",
         "preferredquality": "192",
     }],
 
-        "prefer_ffmpeg": True,
-        "keepvideo": False,
+    "prefer_ffmpeg": True,
+    "keepvideo": False,
+
+    "nocheckcertificate": True,
+    "retries": 10,
+    "fragment_retries": 10,
+
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+    }
 }
 
         await msg.edit_text(
