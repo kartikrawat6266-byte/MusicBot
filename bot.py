@@ -761,68 +761,65 @@ async def play(client, message: Message):
 
 📡 SERVER:
 ➜ ONLINE 24/7
-
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
                 )
 
-ydl_opts = {
-    "format": "bestaudio[ext=m4a]/bestaudio/best",
-    "outtmpl": "%(title)s.%(ext)s",
-    "noplaylist": True,
-    "quiet": True,
-    "nocheckcertificate": True,
-    "no_warnings": True,
-    "geo_bypass": True,
-    "geo_bypass_country": "IN",
-    "extractaudio": True,
-    "audioformat": "mp3",
-    "audioquality": "192K",
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": f"downloads/{title}.%(ext)s",
+            "noplaylist": True,
+            "quiet": True,
+            "nocheckcertificate": True,
+            "no_warnings": True,
+            "geo_bypass": True,
+            "extractaudio": True,
+            "audioformat": "mp3",
+            "audioquality": "192K",
 
-    "retries": 10,
-    "extractor_retries": 10,
-    "fragment_retries": 10,
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
 
-    "cookiefile": "cookies.txt",
+            "cookiefile": "cookies.txt",
 
-    "http_headers": {
-        "User-Agent": "Mozilla/5.0"
-    },
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0"
+            },
 
-    "extractor_args": {
-        "youtube": {
-            "player_client": ["android", "web"]
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            },
+
+            "progress_hooks": [progress_hook],
+
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
         }
-    },
 
-    "progress_hooks": [progress_hook]
-}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(
+                url,
+                download=True
+            )
 
-    info = ydl.extract_info(
-        url,
-        download=True
-    )
+            if not info:
+                return await msg.edit_text(
+                    "❌ AUDIO DOWNLOAD FAILED"
+                )
 
-    if not info:
-        return await msg.edit_text(
-            "❌ AUDIO DOWNLOAD FAILED"
-        )
+            downloaded_file = ydl.prepare_filename(info)
 
-    downloaded_file = ydl.prepare_filename(info)
-
-    file_path = os.path.splitext(
-        downloaded_file
-    )[0] + ".mp3"
+            file_path = os.path.splitext(
+                downloaded_file
+            )[0] + ".mp3"
 
         if not os.path.exists(file_path):
             return await msg.edit_text(
@@ -854,20 +851,6 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
 ⚡ STATUS:
 ➜ SUCCESSFULLY DOWNLOADED
-
-🚀 SERVER:
-➜ ULTRA FAST
-
-📡 QUALITY:
-➜ HIGH AUDIO
-
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
         )
 
@@ -885,7 +868,6 @@ with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         await msg.edit_text(
             f"❌ DOWNLOAD FAILED\n\n{e}"
         )
-
 
 # =========================
 # VIDEO
