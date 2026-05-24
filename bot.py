@@ -594,116 +594,7 @@ def get_ydl_opts(progress_hook, is_video=False):
 # AUDIO  
 # =========================  
   
-@app.on_message(filters.command("play"))  
-async def play(client, message: Message):  
-  
-    if is_banned(message.from_user.id):  
-        return await message.reply_text(BAN_TEXT)  
-  
-    if len(message.command) < 2:  
-        return await message.reply_text(  
-            "❌ Example:\n`/play Alan Walker`"  
-        )  
-  
-    query = " ".join(message.command[1:])  
-  
-    start_time = time.time()  
-  
-    msg = await message.reply_text(  
-        f"🔍 SEARCHING AUDIO...\n\n🎵 {query}"  
-    )  
-  
-    try:  
-  
-        results = YoutubeSearch(  
-            query,  
-            max_results=1  
-        ).to_dict()  
-  
-        if not results:  
-            return await msg.edit_text(  
-                "❌ SONG NOT FOUND"  
-            )  
-  
-        song = results[0]  
-  
-        title = song["title"]  
-  
-        url = f"https://youtube.com/watch?v={song['id']}"  
-  
-        async def update_progress(text):  
-            try:  
-                await msg.edit_text(text)  
-            except:  
-                pass  
-  
-        def progress_hook(d):  
-  
-            if d['status'] == 'downloading':  
-  
-                downloaded = d.get(  
-                    '_downloaded_bytes_str',  
-                    '0MB'  
-                )  
-  
-                total = d.get(  
-                    '_total_bytes_str',  
-                    'Unknown'  
-                )  
-  
-                speed = d.get(  
-                    '_speed_str',  
-                    '0MB/s'  
-                )  
-  
-                percent = d.get(  
-                    '_percent_str',  
-                    '0%'  
-                )  
-  
-                eta = d.get(  
-                    '_eta_str',  
-                    '0s'  
-                )  
-  
-                ping = round(  
-                    (time.time() - start_time) * 1000  
-                )  
-  
-                asyncio.run_coroutine_threadsafe(  
-                    update_progress(  
-                        f"""  
-📥 PREMIUM AUDIO DOWNLOAD  
-  
-━━━━━━━━━━━━━━━━━━━  
-  
-🎵 SONG:  
-{title}  
-  
-📦 DOWNLOADED:  
-{downloaded} / {total}  
-  
-📊 PROGRESS:  
-{percent}  
-  
-⚡ SPEED:  
-{speed}  
-  
-⏳ TIME LEFT:  
-{eta}  
-  
-🏓 LIVE PING:  
-{ping} ms  
-  
-━━━━━━━━━━━━━━━━━━━  
-👑 OWNER:  
-@BeStChEaT_OwNeR  
-"""  
-# =========================  
-# AUDIO  
-# =========================  
-  
-@app.on_message(filters.command("play"))  
+@app.on_message(filters.command("audio"))  
 async def play(client, message: Message):  
   
     if is_banned(message.from_user.id):  
@@ -779,9 +670,7 @@ async def play(client, message: Message):
                     (time.time() - start_time) * 1000  
                 )  
   
-                asyncio.run_coroutine_threadsafe(  
-                    update_progress(  
-                        f"""  
+                text = f"""  
 📥 PREMIUM AUDIO DOWNLOAD  
   
 ━━━━━━━━━━━━━━━━━━━  
@@ -808,7 +697,9 @@ async def play(client, message: Message):
 👑 OWNER:  
 @BeStChEaT_OwNeR  
 """  
-                    ),  
+  
+                asyncio.run_coroutine_threadsafe(  
+                    update_progress(text),  
                     app.loop  
                 )  
   
@@ -882,179 +773,6 @@ ONLINE
         await msg.edit_text(  
             f"❌ ERROR:\n{e}"  
         )
-  
-# =========================  
-# VIDEO  
-# =========================  
-  
-@app.on_message(filters.command("video"))  
-async def video(client, message: Message):  
-  
-    if is_banned(message.from_user.id):  
-        return await message.reply_text(BAN_TEXT)  
-  
-    if len(message.command) < 2:  
-        return await message.reply_text(  
-            "❌ Example:\n`/video Faded`"  
-        )  
-  
-    query = " ".join(message.command[1:])  
-  
-    start_time = time.time()  
-  
-    msg = await message.reply_text(  
-        f"🔍 SEARCHING VIDEO...\n\n🎬 {query}"  
-    )  
-  
-    try:  
-  
-        results = YoutubeSearch(  
-            query,  
-            max_results=1  
-        ).to_dict()  
-  
-        if not results:  
-            return await msg.edit_text(  
-                "❌ VIDEO NOT FOUND"  
-            )  
-  
-        song = results[0]  
-  
-        title = song["title"]  
-  
-        url = f"https://youtube.com/watch?v={song['id']}"  
-  
-        async def update_progress(text):  
-            try:  
-                await msg.edit_text(text)  
-            except:  
-                pass  
-  
-        def progress_hook(d):  
-  
-            if d['status'] == 'downloading':  
-  
-                downloaded = d.get(  
-                    '_downloaded_bytes_str',  
-                    '0MB'  
-                )  
-  
-                total = d.get(  
-                    '_total_bytes_str',  
-                    'Unknown'  
-                )  
-  
-                speed = d.get(  
-                    '_speed_str',  
-                    '0MB/s'  
-                )  
-  
-                percent = d.get(  
-                    '_percent_str',  
-                    '0%'  
-                )  
-  
-                eta = d.get(  
-                    '_eta_str',  
-                    '0s'  
-                )  
-  
-                ping = round(  
-                    (time.time() - start_time) * 1000  
-                )  
-  
-                asyncio.run_coroutine_threadsafe(  
-                    update_progress(  
-                        f"""  
-📥 PREMIUM VIDEO DOWNLOAD  
-  
-━━━━━━━━━━━━━━━━━━━  
-  
-🎬 VIDEO:  
-{title}  
-  
-📦 DOWNLOADED:  
-{downloaded} / {total}  
-  
-📊 PROGRESS:  
-{percent}  
-  
-⚡ SPEED:  
-{speed}  
-  
-⏳ TIME LEFT:  
-{eta}  
-  
-🏓 LIVE PING:  
-{ping} ms  
-  
-━━━━━━━━━━━━━━━━━━━  
-👑 OWNER:  
-@BeStChEaT_OwNeR  
-"""  
-                    ),  
-                    app.loop  
-                )  
-  
-        ydl_opts = get_ydl_opts(  
-            progress_hook,  
-            is_video=True  
-        )  
-  
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  
-  
-            info = ydl.extract_info(  
-                url,  
-                download=True  
-            )  
-  
-            file_path = ydl.prepare_filename(info)  
-  
-        ping = round(  
-            (time.time() - start_time) * 1000  
-        )  
-  
-        await msg.edit_text(  
-            "📤 UPLOADING VIDEO..."  
-        )  
-  
-        await message.reply_video(  
-            video=file_path,  
-            supports_streaming=True,  
-            caption=f"""  
-🎬 PREMIUM VIDEO  
-  
-━━━━━━━━━━━━━━━━━━━  
-  
-🎥 VIDEO:  
-{title}  
-  
-🏓 PING:  
-{ping} ms  
-  
-📡 SERVER:  
-ONLINE  
-  
-━━━━━━━━━━━━━━━━━━━  
-👑 OWNER:  
-@BeStChEaT_OwNeR  
-"""  
-        )  
-  
-        await msg.delete()  
-  
-        try:  
-            os.remove(file_path)  
-        except:  
-            pass  
-  
-    except Exception as e:  
-  
-        print(e)  
-  
-        await msg.edit_text(  
-            f"❌ ERROR:\n{e}"  
-        )  
   
 print("✅ Premium Music Bot Running")  
   
