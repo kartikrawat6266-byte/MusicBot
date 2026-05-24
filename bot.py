@@ -632,7 +632,7 @@ async def play(client, message: Message):
                     update_progress(
                         f"""
 ╔══════════════════════╗
-   🎧 PREMIUM MUSIC 🎧
+    🎧 PREMIUM MUSIC 🎧
 ╚══════════════════════╝
 
 🎵 SONG NAME:
@@ -669,7 +669,7 @@ async def play(client, message: Message):
 ➜ @BeStChEaT_OwNeR
 
 💎 POWERED BY:
-➜ PREMIUM MUSIC SYSTEM
+➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
@@ -735,7 +735,7 @@ async def play(client, message: Message):
         await msg.edit_text(
             """
 ╔════════════════════╗
-   📤 UPLOADING AUDIO
+    📤 UPLOADING AUDIO
 ╚════════════════════╝
 
 ⚡ STATUS:
@@ -746,7 +746,7 @@ async def play(client, message: Message):
         await message.reply_audio(
             audio=file_path,
             title=title,
-            performer="🔥 PREMIUM MUSIC BOT 🔥",
+            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
             caption=f"""
 ╔══════════════════╗
   🎧 PREMIUM MUSIC 🎧
@@ -770,7 +770,7 @@ async def play(client, message: Message):
 ➜ @BeStChEaT_OwNeR
 
 💎 POWERED BY:
-➜ PREMIUM MUSIC SYSTEM
+⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
         )
 
