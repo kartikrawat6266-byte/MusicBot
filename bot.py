@@ -594,28 +594,35 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
+       ydl_opts = {
+        
+     "format": "bestaudio/best",
+     "outtmpl": "downloads/%(title)s.%(ext)s",
 
-            "cookiefile": "cookies.txt",
-            
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
+      "cookiefile": "cookies.txt",
 
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }],
+      "quiet": True,
+      "noplaylist": True,
+      "geo_bypass": True,
+       "nocheckcertificate": True,
 
-            "prefer_ffmpeg": True,
-            "keepvideo": False,
+       "retries": 10,
+       "extractor_retries": 10,
+       "fragment_retries": 10,
 
-            "http_headers": {
-                "User-Agent": "com.google.android.youtube/17.31.35"
-            },
+        "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "192",
+         }],
+
+          "prefer_ffmpeg": True,
+          "keepvideo": False,
+
+           "http_headers": {
+           "User-Agent": "Mozilla/5.0"
+            }
+            }
 
             "extractor_args": {
                 "youtube": {
@@ -725,20 +732,26 @@ async def video(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        ydl_opts = {
-            "format": "best[ext=mp4]/best",
-            "outtmpl": f"downloads/{title}.%(ext)s",
-            "cookiefile": "cookies.txt",
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "retries": 10,
-            "extractor_retries": 10,
-            "fragment_retries": 10,
-            "http_headers": {
-                "User-Agent": "com.google.android.youtube/17.31.35"
-            },
+        
+      ydl_opts = {
+       "format": "best[ext=mp4]/best",
+       "outtmpl": f"downloads/{title}.%(ext)s",
+
+       "cookiefile": "cookies.txt",
+
+       "quiet": True,
+       "noplaylist": True,
+        "geo_bypass": True,
+        "nocheckcertificate": True,
+
+         "retries": 10,
+        "extractor_retries": 10,
+         "fragment_retries": 10,
+
+          "http_headers": {
+          "User-Agent": "Mozilla/5.0"
+           }
+           }
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
