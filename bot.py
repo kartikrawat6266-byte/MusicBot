@@ -599,7 +599,7 @@ async def play(client, message: Message):
             "outtmpl": "downloads/%(title)s.%(ext)s",
 
             "cookiefile": "cookies.txt",
-
+            
             "quiet": True,
             "noplaylist": True,
             "geo_bypass": True,
@@ -728,6 +728,7 @@ async def video(client, message: Message):
         ydl_opts = {
             "format": "best[ext=mp4]/best",
             "outtmpl": f"downloads/{title}.%(ext)s",
+            "cookiefile": "cookies.txt",
             "quiet": True,
             "noplaylist": True,
             "geo_bypass": True,
