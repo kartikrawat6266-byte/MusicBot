@@ -761,19 +761,28 @@ async def play(client, message: Message):
 
 📡 SERVER:
 ➜ ONLINE 24/7
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
                 )
 
         ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": f"downloads/{title}.%(ext)s",
+            "format": "bestaudio[ext=m4a]/bestaudio/best",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
             "noplaylist": True,
             "quiet": True,
             "nocheckcertificate": True,
             "no_warnings": True,
             "geo_bypass": True,
+            "geo_bypass_country": "IN",
             "extractaudio": True,
             "audioformat": "mp3",
             "audioquality": "192K",
@@ -794,13 +803,7 @@ async def play(client, message: Message):
                 }
             },
 
-            "progress_hooks": [progress_hook],
-
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }]
+            "progress_hooks": [progress_hook]
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -851,6 +854,20 @@ async def play(client, message: Message):
 
 ⚡ STATUS:
 ➜ SUCCESSFULLY DOWNLOADED
+
+🚀 SERVER:
+➜ ULTRA FAST
+
+📡 QUALITY:
+➜ HIGH AUDIO
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
         )
 
@@ -868,7 +885,7 @@ async def play(client, message: Message):
         await msg.edit_text(
             f"❌ DOWNLOAD FAILED\n\n{e}"
         )
-
+        
 # =========================
 # VIDEO
 # =========================
