@@ -486,7 +486,7 @@ async def ban(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ USE:\n`/ban user_id`"
+            "❌ USE:\n`/unban user_id`"
         )
 
     user_id = int(message.command[1])
@@ -593,39 +593,26 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        ydl_opts = {
-          "format": "bestaudio/best",
+       ydl_opts = {
+         "format": "bestaudio/best",
 
          "outtmpl": "downloads/%(title)s.%(ext)s",
 
-         "cookiefile": "cookies.txt",
-
+          "cookiefile": "cookies.txt",
+ 
          "quiet": True,
          "noplaylist": True,
 
-    "geo_bypass": True,
-    "nocheckcertificate": True,
+         "geo_bypass": True,
 
-    "retries": 10,
-
-    "http_headers": {
-        "User-Agent": "Mozilla/5.0"
-    },
-
-    "extractor_args": {
-        "youtube": {
-            "player_client": ["android"]
-        }
-    },
-
-    "postprocessors": [{
+        "postprocessors": [{
         "key": "FFmpegExtractAudio",
         "preferredcodec": "mp3",
         "preferredquality": "192",
     }],
 
-    "prefer_ffmpeg": True,
-    "keepvideo": False
+        "prefer_ffmpeg": True,
+        "keepvideo": False,
 }
 
         await msg.edit_text(
@@ -651,9 +638,11 @@ async def play(client, message: Message):
         )
 
         await message.reply_audio(
-            audio=file_path,
-            title=title,
-            performer="Premium Music Bot",
+         audio=file_path,
+         title=title,
+         performer="Premium Music Bot",
+         mime_type="audio/mpeg"
+ )
             caption=f"""
 🎧 PREMIUM MUSIC
 
