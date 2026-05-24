@@ -774,41 +774,30 @@ async def play(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
+ydl_opts = {
+    "format": "bestaudio[ext=m4a]/bestaudio/best",
+    "outtmpl": "%(title)s.%(ext)s",
+    "noplaylist": True,
+    "quiet": True,
+    "nocheckcertificate": True,
+    "ignoreerrors": True,
+    "no_warnings": True,
+    "geo_bypass": True,
+    "extractaudio": True,
+    "audioformat": "mp3",
+    "audioquality": "192K",
+    "cookiefile": "cookies.txt",
 
-            "format": "bestaudio/best",
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+    },
 
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-
-            "cookiefile": "cookies.txt",
-
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-
-            "retries": 10,
-            "extractor_retries": 10,
-            "fragment_retries": 10,
-
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }],
-
-            "prefer_ffmpeg": True,
-            "keepvideo": False,
-
-            "http_headers": {
-                "User-Agent": "Mozilla/5.0"
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android"]
-                }
-            },
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
+        }
+    }
+}
 
             "progress_hooks": [progress_hook]
         }
