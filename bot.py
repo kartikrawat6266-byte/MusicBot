@@ -535,9 +535,7 @@ async def ban(client, message: Message):
     banned = load_banned()
 
     banned[str(user_id)] = {
-        "time": datetime.now().strftime(
-            "%d-%m-%Y %I:%M:%S %p"
-        )
+        "time": get_ist_time()
     }
 
     save_banned(banned)
@@ -545,11 +543,11 @@ async def ban(client, message: Message):
     await message.reply_text(
         "🚫 USER BANNED SUCCESSFULLY"
     )
-    
-try:
-    await client.send_message(
-        user_id,
-        """
+
+    try:
+        await client.send_message(
+            user_id,
+            f"""
 🚫 ACCESS BLOCKED
 
 ━━━━━━━━━━━━━━━━━━━
@@ -563,7 +561,7 @@ BOT HAS BEEN SUSPENDED
 ➜ BANNED FROM BOT
 
 📅 Ban Time :
-➜ IST Time Saved
+➜ {get_ist_time()}
 
 ━━━━━━━━━━━━━━━━━━━
 
@@ -573,9 +571,9 @@ BOT HAS BEEN SUSPENDED
 📞 SUPPORT :
 http://BESTCHEAT_OWNER.t.me
 """
-    )
-except:
-    pass
+        )
+    except:
+        pass
 
 # =========================
 # UNBAN
@@ -604,10 +602,11 @@ async def unban(client, message: Message):
     await message.reply_text(
         "✅ USER UNBANNED SUCCESSFULLY"
     )
-   try:
-    await client.send_message(
-        user_id,
-        """
+
+    try:
+        await client.send_message(
+            user_id,
+            f"""
 ✅ ACCESS RESTORED
 
 ━━━━━━━━━━━━━━━━━━━
@@ -620,8 +619,8 @@ BEEN RESTORED
 ⚡ STATUS :
 ➜ UNBANNED SUCCESSFULLY
 
-💎 YOU CAN NOW USE
-THE BOT AGAIN
+📅 Unban Time :
+➜ {get_ist_time()}
 
 ━━━━━━━━━━━━━━━━━━━
 
@@ -631,9 +630,10 @@ THE BOT AGAIN
 📞 SUPPORT :
 http://BESTCHEAT_OWNER.t.me
 """
-    )
-except:
-    pass
+        )
+    except:
+        pass
+        
 # =========================
 # AUDIO
 # =========================
