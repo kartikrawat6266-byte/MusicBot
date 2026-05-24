@@ -774,13 +774,12 @@ async def play(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
+ydl_opts = {
             "format": "bestaudio[ext=m4a]/bestaudio/best",
             "outtmpl": "%(title)s.%(ext)s",
             "noplaylist": True,
             "quiet": True,
             "nocheckcertificate": True,
-            "ignoreerrors": True,
             "no_warnings": True,
             "geo_bypass": True,
             "extractaudio": True,
@@ -795,7 +794,7 @@ async def play(client, message: Message):
 
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android"]
+                    "player_client": ["android", "web"]
                 }
             },
 
@@ -1015,7 +1014,7 @@ async def video(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
+ydl_opts = {
 
             "format": "best[ext=mp4]/best",
 
@@ -1038,7 +1037,7 @@ async def video(client, message: Message):
 
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android"]
+                    "player_client": ["android", "web"]
                 }
             },
 
