@@ -550,13 +550,25 @@ async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/play Golden Brown`"
+            "❌ Example:\n`/play Alan Walker`"
         )
 
     query = " ".join(message.command[1:])
 
+    start_time = time.time()
+
     msg = await message.reply_text(
-        f"🔍 SEARCHING AUDIO...\n\n🎵 {query}"
+        f"""
+╔════════════════════╗
+  🔍 SEARCHING AUDIO 🔍
+╚════════════════════╝
+
+🎵 SONG:
+➜ {query}
+
+⚡ STATUS:
+➜ SEARCHING...
+"""
     )
 
     try:
@@ -577,8 +589,96 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
+        async def update_progress(text):
+            try:
+                await msg.edit_text(text)
+            except:
+                pass
+
+        def progress_hook(d):
+
+            if d['status'] == 'downloading':
+
+                downloaded = d.get(
+                    '_downloaded_bytes_str',
+                    '0MB'
+                )
+
+                total = d.get(
+                    '_total_bytes_str',
+                    'Unknown'
+                )
+
+                speed = d.get(
+                    '_speed_str',
+                    '0MB/s'
+                )
+
+                percent = d.get(
+                    '_percent_str',
+                    '0%'
+                )
+
+                eta = d.get(
+                    '_eta_str',
+                    '0s'
+                )
+
+                ping = round(
+                    (time.time() - start_time) * 1000
+                )
+
+                asyncio.run_coroutine_threadsafe(
+                    update_progress(
+                        f"""
+╔══════════════════════╗
+   🎧 PREMIUM MUSIC 🎧
+╚══════════════════════╝
+
+🎵 SONG NAME:
+➜ {title}
+
+━━━━━━━━━━━━━━━━━━━
+
+📥 DOWNLOADED:
+➜ {downloaded} / {total}
+
+📊 PROGRESS:
+➜ {percent}
+
+🚀 DOWNLOAD SPEED:
+➜ {speed}
+
+⏳ TIME LEFT:
+➜ {eta}
+
+🏓 LIVE PING:
+➜ {ping} ms
+
+━━━━━━━━━━━━━━━━━━━
+
+⚡ STATUS:
+➜ DOWNLOADING AUDIO...
+
+📡 SERVER:
+➜ ONLINE 24/7
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+➜ PREMIUM MUSIC SYSTEM
+"""
+                    ),
+                    app.loop
+                )
+
         ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio/best",
+
+            "format": "bestaudio/best",
+
             "outtmpl": "downloads/%(title)s.%(ext)s",
 
             "cookiefile": "cookies.txt",
@@ -588,26 +688,9 @@ async def play(client, message: Message):
             "geo_bypass": True,
             "nocheckcertificate": True,
 
-            "retries": 15,
-            "extractor_retries": 15,
-            "fragment_retries": 15,
-
-            "sleep_interval": 2,
-            "max_sleep_interval": 5,
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0 (Linux; Android 13; SM-S918B) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Mobile Safari/537.36"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"]
-                }
-            },
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
 
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
@@ -616,12 +699,20 @@ async def play(client, message: Message):
             }],
 
             "prefer_ffmpeg": True,
-            "keepvideo": False
-        }
+            "keepvideo": False,
 
-        await msg.edit_text(
-            "📥 DOWNLOADING AUDIO..."
-        )
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0"
+            },
+
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android"]
+                }
+            },
+
+            "progress_hooks": [progress_hook]
+        }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -632,7 +723,9 @@ async def play(client, message: Message):
 
             downloaded_file = ydl.prepare_filename(info)
 
-            file_path = os.path.splitext(downloaded_file)[0] + ".mp3"
+            file_path = os.path.splitext(
+                downloaded_file
+            )[0] + ".mp3"
 
         if not os.path.exists(file_path):
             return await msg.edit_text(
@@ -640,30 +733,46 @@ async def play(client, message: Message):
             )
 
         await msg.edit_text(
-            "📤 UPLOADING AUDIO..."
+            """
+╔════════════════════╗
+   📤 UPLOADING AUDIO
+╚════════════════════╝
+
+⚡ STATUS:
+➜ SENDING AUDIO...
+"""
         )
 
         await message.reply_audio(
-        audio=file_path,
-        title=title,
-        performer="Premium Music Bot",
-        caption=f"""
-🎧 PREMIUM MUSIC
+            audio=file_path,
+            title=title,
+            performer="🔥 PREMIUM MUSIC BOT 🔥",
+            caption=f"""
+╔══════════════════╗
+  🎧 PREMIUM MUSIC 🎧
+╚══════════════════╝
 
-━━━━━━━━━━━━━━━━━━━
+🎵 SONG NAME:
+➜ {title}
 
-🎵 SONG:
-{title}
+⚡ STATUS:
+➜ SUCCESSFULLY DOWNLOADED
 
-📡 SERVER:
-ONLINE
+🚀 SERVER:
+➜ ULTRA FAST
+
+📡 QUALITY:
+➜ HIGH AUDIO
 
 ━━━━━━━━━━━━━━━━━━━
 
 👑 OWNER:
-@BeStChEaT_OwNeR
+➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+➜ PREMIUM MUSIC SYSTEM
 """
-)
+        )
 
         await msg.delete()
 
