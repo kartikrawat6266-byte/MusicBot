@@ -1,8 +1,10 @@
 # =========================
 # PREMIUM MUSIC BOT
-# FULL FIXED VERSION
-# REAL DOWNLOAD PROGRESS
+# ULTRA FULL FIXED VERSION
+# AUDIO + VIDEO WORKING
 # YOUTUBE ERROR FIXED
+# BAN/UNBAN MESSAGE ADDED
+# OWNER PANEL FIXED
 # =========================
 
 import os
@@ -205,7 +207,7 @@ async def start(client, message: Message):
     if message.from_user.id == OWNER_ID:
         buttons.append([
             InlineKeyboardButton(
-                "👑 OWNER PANEL",
+                "👑 AuRa KaRtiK FaTheR 👑",
                 callback_data="owner_panel"
             )
         ])
@@ -228,6 +230,9 @@ async def start(client, message: Message):
 
 @app.on_message(filters.command("help"))
 async def help_cmd(client, message: Message):
+
+    if is_banned(message.from_user.id):
+        return await message.reply_text(BAN_TEXT)
 
     buttons = InlineKeyboardMarkup([
         [
@@ -272,7 +277,7 @@ async def main_menu(client, query: CallbackQuery):
     if query.from_user.id == OWNER_ID:
         buttons.append([
             InlineKeyboardButton(
-                "👑 OWNER PANEL",
+                "👑 AuRa KaRtiK FaTheR 👑",
                 callback_data="owner_panel"
             )
         ])
@@ -542,6 +547,45 @@ async def unban(client, message: Message):
         pass
 
 # =========================
+# YT-DLP OPTIONS
+# =========================
+
+def get_ydl_opts(is_video=False, progress_hook=None):
+
+    if is_video:
+        fmt = "bestvideo+bestaudio/best"
+    else:
+        fmt = "bestaudio/best"
+
+    return {
+        "format": fmt,
+        "outtmpl": "downloads/%(title)s.%(ext)s",
+        "quiet": True,
+        "noplaylist": True,
+        "nocheckcertificate": True,
+        "ignoreerrors": True,
+        "geo_bypass": True,
+        "extract_flat": False,
+        "retries": 10,
+        "fragment_retries": 10,
+        "extractor_retries": 10,
+        "concurrent_fragment_downloads": 5,
+        "progress_hooks": [progress_hook] if progress_hook else [],
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            )
+        },
+        "extractor_args": {
+            "youtube": {
+                "player_client": [
+                    "android"
+                ]
+            }
+        }
+    }
+
+# =========================
 # AUDIO
 # =========================
 
@@ -550,6 +594,8 @@ async def play(client, message: Message):
 
     if is_banned(message.from_user.id):
         return await message.reply_text(BAN_TEXT)
+
+    save_user(message.from_user)
 
     if len(message.command) < 2:
         return await message.reply_text(
@@ -654,37 +700,10 @@ async def play(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
-            "format": "bestaudio",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "cookiefile": "cookies.txt",
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "retries": 30,
-            "fragment_retries": 30,
-            "extractor_retries": 30,
-            "skip_unavailable_fragments": True,
-            "progress_hooks": [progress_hook],
-            "extract_flat": False,
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": [
-                        "android",
-                        "ios",
-                        "web"
-                    ]
-                }
-            }
-        }
+        ydl_opts = get_ydl_opts(
+            is_video=False,
+            progress_hook=progress_hook
+        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -739,7 +758,7 @@ ONLINE
         print(e)
 
         await msg.edit_text(
-            f"❌ ERROR:\n{e}"
+            f"❌ DOWNLOAD FAILED\n\n{e}"
         )
 
 # =========================
@@ -751,6 +770,8 @@ async def video(client, message: Message):
 
     if is_banned(message.from_user.id):
         return await message.reply_text(BAN_TEXT)
+
+    save_user(message.from_user)
 
     if len(message.command) < 2:
         return await message.reply_text(
@@ -855,37 +876,10 @@ async def video(client, message: Message):
                     app.loop
                 )
 
-        ydl_opts = {
-            "format": "best",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "cookiefile": "cookies.txt",
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "retries": 30,
-            "fragment_retries": 30,
-            "extractor_retries": 30,
-            "skip_unavailable_fragments": True,
-            "progress_hooks": [progress_hook],
-            "extract_flat": False,
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": [
-                        "android",
-                        "ios",
-                        "web"
-                    ]
-                }
-            }
-        }
+        ydl_opts = get_ydl_opts(
+            is_video=True,
+            progress_hook=progress_hook
+        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -939,7 +933,7 @@ ONLINE
         print(e)
 
         await msg.edit_text(
-            f"❌ ERROR:\n{e}"
+            f"❌ DOWNLOAD FAILED\n\n{e}"
         )
 
 print("✅ Premium Music Bot Running")
