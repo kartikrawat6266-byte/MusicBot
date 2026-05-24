@@ -29,7 +29,7 @@ import yt_dlp
 
 # =========================
 # INDIA TIMEZONE
-# =========================
+# =API_ID========================
 
 IST = pytz.timezone("Asia/Kolkata")
 
@@ -41,6 +41,11 @@ def get_ist_time():
 # =========================
 # CONFIG
 # =========================
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -641,12 +646,6 @@ http://BESTCHEAT_OWNER.t.me
 # AUDIO
 # =========================
 
-# =========================
-# FIXED AUDIO SECTION
-# PASTE THIS IN PLACE OF
-# OLD /audio FUNCTION
-# =========================
-
 @app.on_message(filters.command("audio"))
 async def play(client, message: Message):
 
@@ -772,44 +771,33 @@ async def play(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
                 )
 
         ydl_opts = {
-
             "format": "bestaudio/best",
-
             "outtmpl": f"downloads/{title}.%(ext)s",
-
             "noplaylist": True,
+            "extract_flat": False,
             "quiet": True,
             "nocheckcertificate": True,
             "no_warnings": True,
-
             "geo_bypass": True,
             "geo_bypass_country": "IN",
-
             "retries": 10,
             "extractor_retries": 10,
             "fragment_retries": 10,
-
             "http_headers": {
                 "User-Agent": "Mozilla/5.0"
             },
-
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
                 }
             },
-
             "progress_hooks": [progress_hook],
-
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
@@ -862,7 +850,7 @@ async def play(client, message: Message):
         await msg.edit_text(
             """
 ╔════════════════════╗
-    📤 UPLOADING AUDIO
+  📤 UPLOADING AUDIO
 ╚════════════════════╝
 
 ⚡ STATUS:
@@ -870,12 +858,7 @@ async def play(client, message: Message):
 """
         )
 
-        await message.reply_audio(
-            audio=file_path,
-            title=title,
-            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
-
-            caption=f"""
+        caption = f"""
 ╔══════════════════╗
   🎧 PREMIUM MUSIC 🎧
 ╚══════════════════╝
@@ -896,10 +879,13 @@ async def play(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
+
+        await message.reply_audio(
+            audio=file_path,
+            title=title,
+            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐫𝐓𝐢𝐊 🜲",
+            caption=caption
         )
 
         await msg.delete()
@@ -911,11 +897,23 @@ async def play(client, message: Message):
 
     except Exception as e:
 
-        print(e)
+        error_text = str(e)
 
-        await msg.edit_text(
-            f"❌ DOWNLOAD FAILED\n\n{e}"
-        )
+        print(error_text)
+
+        if "Sign in to confirm you're not a bot" in error_text:
+
+            await message.reply_text(
+                "❌ DOWNLOAD FAILED\n\n"
+                "⚠️ YouTube blocked request.\n"
+                "✅ Add valid cookies.txt file."
+            )
+
+        else:
+
+            await message.reply_text(
+                f"❌ ERROR:\n{error_text[:300]}"
+            )
         
 # =========================
 # VIDEO
