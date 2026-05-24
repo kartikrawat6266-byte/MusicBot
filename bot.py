@@ -120,59 +120,65 @@ def clean_filename(name):
 # =========================
 
 START_TEXT = """
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧 𝗔𝗖𝗧𝗜𝗩𝗘
+✨ Welcome To Advanced Music Downloader Bot ✨
 
-━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 + 𝗩𝗜𝗗𝗘𝗢
-📥 𝗟𝗜𝗩𝗘 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-📡 24/7 𝗢𝗡𝗟𝗜𝗡𝗘
-━━━━━━━━━━━━━━━━━━━
+Download your favorite songs and videos in premium quality directly from YouTube with super fast speed 🚀
 
-🎵 AUDIO:
-`/play song name`
+━━━━━━━━━━━━━━━
+🎵 Audio Command
+➥ "/audio Song Name"
 
-🎬 VIDEO:
-`/video song name`
+🎬 Video Command
+➥ "/video Video Name"
+━━━━━━━━━━━━━━━
 
-📚 HELP:
-`/help`
+⚡ What You Get:
 
-👑 OWNER:
-@BeStChEaT_OwNeR
+✅ Crystal Clear Audio
+✅ HD Video Quality
+✅ Fast & Smooth Downloads
+✅ Optimized Low Size Files
+✅ Clean Premium Interface
+✅ Instant Results Anytime
+
+💡 Just send the command with any song or video name and the bot will handle the rest automatically.
+
+🛠 Need A Custom Telegram Bot?
+📩 Contact The Owner For More Details
+
+👑 Owner : @BeStChEaT_OwNeR
+📞 Help & Support : http://BESTCHEAT_OWNER.t.me
 """
 
 HELP_TEXT = """
-📚 PREMIUM MUSIC BOT HELP
+🎵✨ New Premium Telegram Music Bot ✨🎬
 
-━━━━━━━━━━━━━━━━━━━
+Fast, smooth, and high quality downloads powered by YouTube 🚀
 
-🎵 AUDIO:
-`/play Golden Brown`
+━━━━━━━━━━━━━━━
+🎧 Audio Example
+➥ "/audio Golden Brown"
 
-🎬 VIDEO:
-`/video Saiyaara`
+🎥 Video Example
+➥ "/video Saiyaara"
+━━━━━━━━━━━━━━━
 
-📚 HELP:
-`/help`
+🔥 Features:
 
-━━━━━━━━━━━━━━━━━━━
+✅ High Quality Audio
+✅ HD Video Downloads
+✅ Low MB Size
+✅ Fast Download Speed
+✅ Premium Interface
+✅ Instant Results
 
-⚡ FEATURES:
-• HQ Audio
-• HD Video
-• Live Download
-• Fast Upload
-• Owner Panel
-• Ban / Unban
-• User History
-• 24/7 Online
+⚡ Built for users who want speed, quality, and a premium music experience in one bot.
 
-━━━━━━━━━━━━━━━━━━━
+🤖 Want Your Own Custom Bot?
+📩 Contact The Owner For Setup & Details.
 
-👑 OWNER:
-@BeStChEaT_OwNeR
+👑 Owner : http://BESTCHEAT_OWNER.t.me
+📞 Support & Queries: @BeStChEaT_OwNeR
 """
 
 BAN_TEXT = """
