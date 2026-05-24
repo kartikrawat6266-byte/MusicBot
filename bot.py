@@ -1,10 +1,10 @@
 # =========================
 # PREMIUM MUSIC BOT
 # FULLY FIXED FINAL VERSION
-# ALL FEATURES ADDED
-# YOUTUBE BOT CHECK FIXED
-# BAN / UNBAN MESSAGE ADDED
-# AUDIO + VIDEO FIXED
+# INDIA TIMEZONE FIXED
+# JOIN TIME FIXED
+# BAN TIME FIXED
+# HISTORY TIME FIXED
 # =========================
 
 import os
@@ -12,6 +12,8 @@ import re
 import time
 import json
 import asyncio
+import pytz
+
 from datetime import datetime
 
 from pyrogram import Client, filters
@@ -24,6 +26,17 @@ from pyrogram.types import (
 
 from youtube_search import YoutubeSearch
 import yt_dlp
+
+# =========================
+# INDIA TIMEZONE
+# =========================
+
+IST = pytz.timezone("Asia/Kolkata")
+
+def get_ist_time():
+    return datetime.now(IST).strftime(
+        "%d-%m-%Y %I:%M:%S %p"
+    )
 
 # =========================
 # CONFIG
@@ -100,9 +113,7 @@ def save_user(user):
 
     if user_id not in users:
 
-        join_time = datetime.now().strftime(
-            "%d-%m-%Y %I:%M:%S %p"
-        )
+        join_time = get_ist_time()
 
         users[user_id] = {
             "name": user.first_name,
