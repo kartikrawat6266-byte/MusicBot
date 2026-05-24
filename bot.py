@@ -1,15 +1,6 @@
-# =========================
-# PREMIUM MUSIC BOT
-# FULL FIXED VERSION
-# AUDIO + VIDEO WORKING
-# YOUTUBE ERROR FIXED
-# BAN/UNBAN MESSAGE FIXED
-# REAL DOWNLOAD PROGRESS
-# =========================
-
 import os
-import time
 import json
+import time
 import asyncio
 from datetime import datetime
 
@@ -21,8 +12,8 @@ from pyrogram.types import (
     CallbackQuery
 )
 
-from youtube_search import YoutubeSearch
 import yt_dlp
+from youtubesearchpython import VideosSearch
 
 # =========================
 # CONFIG
@@ -47,12 +38,12 @@ app = Client(
 
 os.makedirs("downloads", exist_ok=True)
 
-# =========================
-# FILES
-# =========================
-
 USERS_FILE = "users.json"
 BANNED_FILE = "banned.json"
+
+# =========================
+# FILE CREATE
+# =========================
 
 if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, "w") as f:
@@ -99,14 +90,12 @@ def save_user(user):
 
     if user_id not in users:
 
-        join_time = datetime.now().strftime(
-            "%d-%m-%Y %I:%M:%S %p"
-        )
-
         users[user_id] = {
             "name": user.first_name,
-            "username": user.username if user.username else "No Username",
-            "join_time": join_time
+            "username": user.username or "No Username",
+            "join_time": datetime.now().strftime(
+                "%d-%m-%Y %I:%M:%S %p"
+            )
         }
 
         save_users(users)
@@ -116,24 +105,24 @@ def save_user(user):
 # =========================
 
 START_TEXT = """
-🎧 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗨𝗦𝗜𝗖 𝗕𝗢𝗧 𝗔𝗖𝗧𝗜𝗩𝗘
+🎧 PREMIUM MUSIC BOT ACTIVE
 
 ━━━━━━━━━━━━━━━━━━━
-⚡ 𝗨𝗟𝗧𝗥𝗔 𝗙𝗔𝗦𝗧 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-🚀 𝗛𝗜𝗚𝗛 𝗦𝗣𝗘𝗘𝗗 𝗦𝗘𝗥𝗩𝗘𝗥
-🎵 𝗛𝗤 𝗔𝗨𝗗𝗜𝗢 + 𝗩𝗜𝗗𝗘𝗢
-📥 𝗟𝗜𝗩𝗘 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗
-📡 24/7 𝗢𝗡𝗟𝗜𝗡𝗘
+⚡ ULTRA FAST DOWNLOAD
+🚀 HIGH SPEED SERVER
+🎵 HQ AUDIO + VIDEO
+📥 LIVE DOWNLOAD
+📡 24/7 ONLINE
 ━━━━━━━━━━━━━━━━━━━
 
 🎵 AUDIO:
-`/play song name`
+/play song name
 
 🎬 VIDEO:
-`/video song name`
+/video song name
 
 📚 HELP:
-`/help`
+/help
 
 👑 OWNER:
 @BeStChEaT_OwNeR
@@ -142,28 +131,11 @@ START_TEXT = """
 HELP_TEXT = """
 📚 PREMIUM MUSIC BOT HELP
 
-━━━━━━━━━━━━━━━━━━━
-
 🎵 AUDIO:
-`/play song name`
+/play song name
 
 🎬 VIDEO:
-`/video song name`
-
-📚 HELP:
-`/help`
-
-━━━━━━━━━━━━━━━━━━━
-
-⚡ FEATURES:
-• HQ Audio
-• HD Video
-• Live Download Speed
-• Live Progress
-• Instant Upload
-• 24/7 Online
-
-━━━━━━━━━━━━━━━━━━━
+/video song name
 
 👑 OWNER:
 @BeStChEaT_OwNeR
@@ -172,9 +144,7 @@ HELP_TEXT = """
 BAN_TEXT = """
 🚫 ACCESS BLOCKED
 
-━━━━━━━━━━━━━━━━━━━
-
-❌ Your access suspended.
+❌ You are banned from using this bot.
 
 👑 OWNER:
 @BeStChEaT_OwNeR
@@ -183,9 +153,7 @@ BAN_TEXT = """
 UNBAN_TEXT = """
 ✅ ACCESS RESTORED
 
-━━━━━━━━━━━━━━━━━━━
-
-🎉 You can use bot again.
+🎉 You can use the bot again.
 
 👑 OWNER:
 @BeStChEaT_OwNeR
@@ -229,38 +197,19 @@ async def start(client, message: Message):
 # HELP
 # =========================
 
-@app.on_message(filters.command("help"))
-async def help_cmd(client, message: Message):
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "🏠 Main Menu",
-                callback_data="main_menu"
-            )
-        ]
-    ])
-
-    await message.reply_text(
-        HELP_TEXT,
-        reply_markup=buttons
-    )
-
 @app.on_callback_query(filters.regex("help"))
 async def help_callback(client, query: CallbackQuery):
 
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "🏠 Main Menu",
-                callback_data="main_menu"
-            )
-        ]
-    ])
-
     await query.message.edit_text(
         HELP_TEXT,
-        reply_markup=buttons
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "🏠 Main Menu",
+                    callback_data="main_menu"
+                )
+            ]
+        ])
     )
 
 # =========================
@@ -302,40 +251,28 @@ async def owner_panel(client, query: CallbackQuery):
     if query.from_user.id != OWNER_ID:
         return
 
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "👥 Users",
-                callback_data="users"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "🚫 Ban",
-                callback_data="ban_info"
-            ),
-            InlineKeyboardButton(
-                "✅ Unban",
-                callback_data="unban_info"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "📜 Banned",
-                callback_data="banned_history"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "🏠 Main Menu",
-                callback_data="main_menu"
-            )
-        ]
-    ])
-
     await query.message.edit_text(
-        "👑 OWNER CONTROL PANEL",
-        reply_markup=buttons
+        "👑 OWNER PANEL",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "👥 Users",
+                    callback_data="users"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "📜 Banned",
+                    callback_data="banned"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🏠 Main Menu",
+                    callback_data="main_menu"
+                )
+            ]
+        ])
     )
 
 # =========================
@@ -347,42 +284,57 @@ async def users(client, query: CallbackQuery):
 
     users = load_users()
 
-    text = "👥 USER HISTORY\n\n"
+    text = "👥 USERS LIST\n\n"
 
-    for user_id, data in users.items():
+    for uid, data in users.items():
 
         text += f"""
-👤 NAME:
-{data['name']}
+👤 {data['name']}
+🆔 {uid}
+🔗 @{data['username']}
 
-🔗 USERNAME:
-@{data['username']}
-
-🆔 ID:
-{user_id}
-
-📅 JOIN TIME:
-{data['join_time']}
-
-━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━
 """
-
-    buttons = InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(
-                "⬅️ Back",
-                callback_data="owner_panel"
-            ),
-            InlineKeyboardButton(
-                "🏠 Main Menu",
-                callback_data="main_menu"
-            )
-        ]
-    ])
 
     await query.message.edit_text(
         text[:4000],
-        reply_markup=buttons
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "⬅️ Back",
+                    callback_data="owner_panel"
+                )
+            ]
+        ])
+    )
+
+# =========================
+# BANNED USERS
+# =========================
+
+@app.on_callback_query(filters.regex("banned"))
+async def banned_users(client, query: CallbackQuery):
+
+    banned = load_banned()
+
+    text = "📜 BANNED USERS\n\n"
+
+    if not banned:
+        text += "❌ No banned users"
+
+    for uid in banned:
+        text += f"🆔 {uid}\n"
+
+    await query.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "⬅️ Back",
+                    callback_data="owner_panel"
+                )
+            ]
+        ])
     )
 
 # =========================
@@ -390,26 +342,21 @@ async def users(client, query: CallbackQuery):
 # =========================
 
 @app.on_message(filters.command("ban"))
-async def ban(client, message: Message):
+async def ban_user(client, message: Message):
 
     if message.from_user.id != OWNER_ID:
         return
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ USE:\n`/ban user_id`"
+            "/ban user_id"
         )
 
-    user_id = int(message.command[1])
-
-    if user_id == OWNER_ID:
-        return await message.reply_text(
-            "❌ OWNER CANNOT BE BANNED"
-        )
+    user_id = str(message.command[1])
 
     banned = load_banned()
 
-    banned[str(user_id)] = {
+    banned[user_id] = {
         "time": datetime.now().strftime(
             "%d-%m-%Y %I:%M:%S %p"
         )
@@ -418,12 +365,12 @@ async def ban(client, message: Message):
     save_banned(banned)
 
     await message.reply_text(
-        "🚫 USER BANNED SUCCESSFULLY"
+        "🚫 User banned successfully"
     )
 
     try:
         await app.send_message(
-            user_id,
+            int(user_id),
             BAN_TEXT
         )
     except:
@@ -434,36 +381,55 @@ async def ban(client, message: Message):
 # =========================
 
 @app.on_message(filters.command("unban"))
-async def unban(client, message: Message):
+async def unban_user(client, message: Message):
 
     if message.from_user.id != OWNER_ID:
         return
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ USE:\n`/unban user_id`"
+            "/unban user_id"
         )
 
-    user_id = int(message.command[1])
+    user_id = str(message.command[1])
 
     banned = load_banned()
 
-    if str(user_id) in banned:
-        del banned[str(user_id)]
+    if user_id in banned:
+        del banned[user_id]
 
     save_banned(banned)
 
     await message.reply_text(
-        "✅ USER UNBANNED SUCCESSFULLY"
+        "✅ User unbanned successfully"
     )
 
     try:
         await app.send_message(
-            user_id,
+            int(user_id),
             UNBAN_TEXT
         )
     except:
         pass
+
+# =========================
+# SEARCH FUNCTION
+# =========================
+
+def search_youtube(query):
+
+    search = VideosSearch(query, limit=1)
+    result = search.result()
+
+    if not result["result"]:
+        return None
+
+    video = result["result"][0]
+
+    return {
+        "title": video["title"],
+        "link": video["link"]
+    }
 
 # =========================
 # AUDIO
@@ -477,85 +443,39 @@ async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/play Alan Walker`"
+            "❌ Example:\n/play Alan Walker"
         )
 
     query = " ".join(message.command[1:])
 
     msg = await message.reply_text(
-        f"🔍 SEARCHING AUDIO...\n\n🎵 {query}"
+        f"🔍 Searching...\n\n🎵 {query}"
     )
 
     try:
 
-        results = YoutubeSearch(
-            query,
-            max_results=1
-        ).to_dict()
+        data = search_youtube(query)
 
-        if not results:
+        if not data:
             return await msg.edit_text(
-                "❌ SONG NOT FOUND"
+                "❌ Song not found"
             )
 
-        song = results[0]
-
-        title = song["title"]
-
-        url = f"https://youtube.com/watch?v={song['id']}"
-
-        def progress_hook(d):
-
-            if d['status'] == 'downloading':
-
-                percent = d.get('_percent_str', '0%')
-                speed = d.get('_speed_str', '0MB/s')
-
-                asyncio.create_task(
-                    msg.edit_text(
-                        f"""
-📥 PREMIUM AUDIO DOWNLOAD
-
-━━━━━━━━━━━━━━━━━━━
-
-🎵 SONG:
-{title}
-
-📊 PROGRESS:
-{percent}
-
-⚡ SPEED:
-{speed}
-
-━━━━━━━━━━━━━━━━━━━
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-                    )
-                )
+        title = data["title"]
+        url = data["link"]
 
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
-            "nocheckcertificate": True,
             "geo_bypass": True,
-            "retries": 10,
-            "progress_hooks": [progress_hook],
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android"]
-                }
-            }
+            "nocheckcertificate": True
         }
+
+        await msg.edit_text(
+            "📥 Downloading audio..."
+        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -567,37 +487,20 @@ async def play(client, message: Message):
             file_path = ydl.prepare_filename(info)
 
         await msg.edit_text(
-            "📤 UPLOADING AUDIO..."
+            "📤 Uploading audio..."
         )
 
         await message.reply_audio(
             audio=file_path,
             title=title,
-            performer="Premium Music Bot",
-            caption=f"""
-🎧 PREMIUM MUSIC
-
-━━━━━━━━━━━━━━━━━━━
-
-🎵 SONG:
-{title}
-
-━━━━━━━━━━━━━━━━━━━
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
+            performer="Premium Music Bot"
         )
 
         await msg.delete()
 
-        try:
-            os.remove(file_path)
-        except:
-            pass
+        os.remove(file_path)
 
     except Exception as e:
-
-        print(e)
 
         await msg.edit_text(
             f"❌ DOWNLOAD FAILED\n\n{e}"
@@ -615,85 +518,39 @@ async def video(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/video Faded`"
+            "❌ Example:\n/video Faded"
         )
 
     query = " ".join(message.command[1:])
 
     msg = await message.reply_text(
-        f"🔍 SEARCHING VIDEO...\n\n🎬 {query}"
+        f"🔍 Searching...\n\n🎬 {query}"
     )
 
     try:
 
-        results = YoutubeSearch(
-            query,
-            max_results=1
-        ).to_dict()
+        data = search_youtube(query)
 
-        if not results:
+        if not data:
             return await msg.edit_text(
-                "❌ VIDEO NOT FOUND"
+                "❌ Video not found"
             )
 
-        song = results[0]
-
-        title = song["title"]
-
-        url = f"https://youtube.com/watch?v={song['id']}"
-
-        def progress_hook(d):
-
-            if d['status'] == 'downloading':
-
-                percent = d.get('_percent_str', '0%')
-                speed = d.get('_speed_str', '0MB/s')
-
-                asyncio.create_task(
-                    msg.edit_text(
-                        f"""
-📥 PREMIUM VIDEO DOWNLOAD
-
-━━━━━━━━━━━━━━━━━━━
-
-🎬 VIDEO:
-{title}
-
-📊 PROGRESS:
-{percent}
-
-⚡ SPEED:
-{speed}
-
-━━━━━━━━━━━━━━━━━━━
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-                    )
-                )
+        title = data["title"]
+        url = data["link"]
 
         ydl_opts = {
-            "format": "best",
+            "format": "best[ext=mp4]/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
             "quiet": True,
             "noplaylist": True,
-            "nocheckcertificate": True,
             "geo_bypass": True,
-            "retries": 10,
-            "progress_hooks": [progress_hook],
-
-            "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0"
-                )
-            },
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android"]
-                }
-            }
+            "nocheckcertificate": True
         }
+
+        await msg.edit_text(
+            "📥 Downloading video..."
+        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -705,41 +562,25 @@ async def video(client, message: Message):
             file_path = ydl.prepare_filename(info)
 
         await msg.edit_text(
-            "📤 UPLOADING VIDEO..."
+            "📤 Uploading video..."
         )
 
         await message.reply_video(
             video=file_path,
-            supports_streaming=True,
-            caption=f"""
-🎬 PREMIUM VIDEO
-
-━━━━━━━━━━━━━━━━━━━
-
-🎥 VIDEO:
-{title}
-
-━━━━━━━━━━━━━━━━━━━
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
+            caption=title,
+            supports_streaming=True
         )
 
         await msg.delete()
 
-        try:
-            os.remove(file_path)
-        except:
-            pass
+        os.remove(file_path)
 
     except Exception as e:
-
-        print(e)
 
         await msg.edit_text(
             f"❌ DOWNLOAD FAILED\n\n{e}"
         )
 
-print("✅ Premium Music Bot Running")
+print("✅ Bot Running")
 
 app.run()
