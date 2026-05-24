@@ -641,6 +641,12 @@ http://BESTCHEAT_OWNER.t.me
 # AUDIO
 # =========================
 
+# =========================
+# FIXED AUDIO SECTION
+# PASTE THIS IN PLACE OF
+# OLD /audio FUNCTION
+# =========================
+
 @app.on_message(filters.command("audio"))
 async def play(client, message: Message):
 
@@ -775,23 +781,22 @@ async def play(client, message: Message):
                 )
 
         ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio/best",
-            "outtmpl": "downloads/%(title)s.%(ext)s",
+
+            "format": "bestaudio/best",
+
+            "outtmpl": f"downloads/{title}.%(ext)s",
+
             "noplaylist": True,
             "quiet": True,
             "nocheckcertificate": True,
             "no_warnings": True,
+
             "geo_bypass": True,
             "geo_bypass_country": "IN",
-            "extractaudio": True,
-            "audioformat": "mp3",
-            "audioquality": "192K",
 
             "retries": 10,
             "extractor_retries": 10,
             "fragment_retries": 10,
-
-            "cookiefile": "cookies.txt",
 
             "http_headers": {
                 "User-Agent": "Mozilla/5.0"
@@ -799,44 +804,63 @@ async def play(client, message: Message):
 
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android", "web"]
+                    "player_client": ["android"]
                 }
             },
 
-            "progress_hooks": [progress_hook]
+            "progress_hooks": [progress_hook],
+
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
         }
 
-with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        await msg.edit_text(
+            """
+╔════════════════════╗
+    📥 DOWNLOADING 📥
+╚════════════════════╝
 
-    info = ydl.extract_info(
-        url,
-        download=True
-    )
+⚡ STATUS:
+➜ FETCHING AUDIO...
+"""
+        )
 
-    downloaded_file = ydl.prepare_filename(info)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-    base = os.path.splitext(downloaded_file)[0]
+            info = ydl.extract_info(
+                url,
+                download=True
+            )
 
-    possible_files = [
-        base + ".mp3",
-        base + ".m4a",
-        base + ".webm"
-    ]
+            downloaded_file = ydl.prepare_filename(info)
 
-    file_path = None
+        possible_files = [
 
-    for f in possible_files:
-        if os.path.exists(f):
-            file_path = f
-            break
+            os.path.splitext(
+                downloaded_file
+            )[0] + ".mp3",
 
-if not file_path:
-    return await msg.edit_text(
-        "❌ AUDIO DOWNLOAD FAILED"
-    )
+            downloaded_file
+        ]
 
-await msg.edit_text(
-    """
+        file_path = None
+
+        for f in possible_files:
+
+            if os.path.exists(f):
+                file_path = f
+                break
+
+        if not file_path:
+            return await msg.edit_text(
+                "❌ AUDIO DOWNLOAD FAILED"
+            )
+
+        await msg.edit_text(
+            """
 ╔════════════════════╗
     📤 UPLOADING AUDIO
 ╚════════════════════╝
@@ -844,12 +868,13 @@ await msg.edit_text(
 ⚡ STATUS:
 ➜ SENDING AUDIO...
 """
-)
+        )
 
         await message.reply_audio(
             audio=file_path,
             title=title,
             performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
+
             caption=f"""
 ╔══════════════════╗
   🎧 PREMIUM MUSIC 🎧
