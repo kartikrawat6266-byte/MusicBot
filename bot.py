@@ -996,7 +996,6 @@ async def video(client, message: Message):
         await message.reply_video(
             video=file_path,
             supports_streaming=True,
-            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
             caption=f"""
 ╔══════════════════╗
   🎬 PREMIUM VIDEO 🎬
