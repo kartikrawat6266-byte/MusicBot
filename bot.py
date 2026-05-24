@@ -578,7 +578,7 @@ async def play(client, message: Message):
         url = f"https://youtube.com/watch?v={song['id']}"
 
         ydl_opts = {
-            "format": "bestaudio/best",
+            "format": "bestaudio[ext=m4a]/bestaudio/best",
             "outtmpl": "downloads/%(title)s.%(ext)s",
 
             "cookiefile": "cookies.txt",
@@ -588,9 +588,26 @@ async def play(client, message: Message):
             "geo_bypass": True,
             "nocheckcertificate": True,
 
-            "retries": 10,
-            "extractor_retries": 10,
-            "fragment_retries": 10,
+            "retries": 15,
+            "extractor_retries": 15,
+            "fragment_retries": 15,
+
+            "sleep_interval": 2,
+            "max_sleep_interval": 5,
+
+            "http_headers": {
+                "User-Agent": (
+                    "Mozilla/5.0 (Linux; Android 13; SM-S918B) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Mobile Safari/537.36"
+                )
+            },
+
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            },
 
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
@@ -599,11 +616,7 @@ async def play(client, message: Message):
             }],
 
             "prefer_ffmpeg": True,
-            "keepvideo": False,
-
-            "http_headers": {
-                "User-Agent": "Mozilla/5.0"
-            }
+            "keepvideo": False
         }
 
         await msg.edit_text(
@@ -668,6 +681,7 @@ ONLINE
             f"❌ DOWNLOAD FAILED\n\n{e}"
         )
 
+
 # =========================
 # VIDEO
 # =========================
@@ -708,7 +722,7 @@ async def video(client, message: Message):
         url = f"https://youtube.com/watch?v={song['id']}"
 
         ydl_opts = {
-            "format": "best[ext=mp4]/best",
+            "format": "bestvideo+bestaudio/best",
             "outtmpl": f"downloads/{title}.%(ext)s",
 
             "cookiefile": "cookies.txt",
@@ -718,12 +732,27 @@ async def video(client, message: Message):
             "geo_bypass": True,
             "nocheckcertificate": True,
 
-            "retries": 10,
-            "extractor_retries": 10,
-            "fragment_retries": 10,
+            "retries": 15,
+            "extractor_retries": 15,
+            "fragment_retries": 15,
+
+            "sleep_interval": 2,
+            "max_sleep_interval": 5,
+
+            "merge_output_format": "mp4",
 
             "http_headers": {
-                "User-Agent": "Mozilla/5.0"
+                "User-Agent": (
+                    "Mozilla/5.0 (Linux; Android 13; SM-S918B) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Mobile Safari/537.36"
+                )
+            },
+
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
             }
         }
 
