@@ -554,6 +554,7 @@ async def unban(client, message: Message):
     except:
         pass
 
+
 # =========================
 # AUDIO
 # =========================
@@ -593,24 +594,34 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-       ydl_opts = {
-           "format": "bestaudio/best",
-           "outtmpl": "downloads/%(title)s.%(ext)s",
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
 
-           "cookiefile": "cookies.txt",
+            "cookiefile": "cookies.txt",
 
-           "quiet": True,
-           "noplaylist": True,
-           "geo_bypass": True,
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
 
-           "postprocessors": [{
-           "key": "FFmpegExtractAudio",
-           "preferredcodec": "mp3",
-           "preferredquality": "192",
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
             }],
 
-               "prefer_ffmpeg": True,
-               "keepvideo": False,
+            "prefer_ffmpeg": True,
+            "keepvideo": False,
+
+            "http_headers": {
+                "User-Agent": "com.google.android.youtube/17.31.35"
+            },
+
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android"]
+                }
+            }
         }
 
         await msg.edit_text(
@@ -624,7 +635,9 @@ async def play(client, message: Message):
                 download=True
             )
 
-            file_path = ydl.prepare_filename(info)
+            downloaded_file = ydl.prepare_filename(info)
+
+            file_path = os.path.splitext(downloaded_file)[0] + ".mp3"
 
         if not os.path.exists(file_path):
             return await msg.edit_text(
@@ -636,11 +649,10 @@ async def play(client, message: Message):
         )
 
         await message.reply_audio(
-         audio=file_path,
-         title=title,
-         performer="Premium Music Bot",
-         mime_type="audio/mpeg"
- )
+            audio=file_path,
+            title=title,
+            performer="Premium Music Bot",
+            mime_type="audio/mpeg",
             caption=f"""
 🎧 PREMIUM MUSIC
 
