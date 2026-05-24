@@ -111,20 +111,22 @@ def save_user(user):
 
     user_id = str(user.id)
 
-    if user_id not in users:
+    current_time = get_ist_time()
 
-        join_time = get_ist_time()
+    if user_id not in users:
 
         users[user_id] = {
             "name": user.first_name,
             "username": user.username if user.username else "No Username",
-            "join_time": join_time
+            "join_time": current_time,
+            "last_active": current_time
         }
 
-        save_users(users)
+    else:
 
-def clean_filename(name):
-    return re.sub(r'[\\/*?:"<>|]', "", name)
+        users[user_id]["last_active"] = current_time
+
+    save_users(users)
 
 # =========================
 # TEXTS
@@ -421,6 +423,7 @@ async def users(client, query: CallbackQuery):
 async def banned_history(client, query: CallbackQuery):
 
     banned = load_banned()
+    users = load_users()
 
     text = "📜 BANNED USERS\n\n"
 
@@ -429,12 +432,28 @@ async def banned_history(client, query: CallbackQuery):
 
     for user_id, data in banned.items():
 
+        user_data = users.get(str(user_id), {})
+
+        username = user_data.get(
+            "username",
+            "No Username"
+        )
+
+        if username != "No Username":
+            username = f"@{username}"
+
         text += f"""
-🆔 USER ID:
+👤 Telegram Name :
+{user_data.get('name', 'Unknown')}
+
+🆔 Telegram ID :
 {user_id}
 
-📅 BANNED:
-{data['time']}
+🔗 TG Username :
+{username}
+
+🚫 Ban Time :
+{data.get('time', 'Unknown')}
 
 ━━━━━━━━━━━━━━━━━━━
 """
@@ -526,6 +545,36 @@ async def ban(client, message: Message):
     await message.reply_text(
         "🚫 USER BANNED SUCCESSFULLY"
     )
+    try:
+    await client.send_message(
+        user_id,
+        """
+🚫 ACCESS BLOCKED
+
+━━━━━━━━━━━━━━━━━━━
+
+❌ YOUR ACCESS TO THIS
+BOT HAS BEEN SUSPENDED
+
+━━━━━━━━━━━━━━━━━━━
+
+⚡ STATUS :
+➜ BANNED FROM BOT
+
+📅 Ban Time :
+➜ IST Time Saved
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER :
+@BeStChEaT_OwNeR
+
+📞 SUPPORT :
+http://BESTCHEAT_OWNER.t.me
+"""
+    )
+except:
+    pass
 
 # =========================
 # UNBAN
@@ -554,7 +603,36 @@ async def unban(client, message: Message):
     await message.reply_text(
         "✅ USER UNBANNED SUCCESSFULLY"
     )
+   try:
+    await client.send_message(
+        user_id,
+        """
+✅ ACCESS RESTORED
 
+━━━━━━━━━━━━━━━━━━━
+
+🎉 YOUR ACCESS HAS
+BEEN RESTORED
+
+━━━━━━━━━━━━━━━━━━━
+
+⚡ STATUS :
+➜ UNBANNED SUCCESSFULLY
+
+💎 YOU CAN NOW USE
+THE BOT AGAIN
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER :
+@BeStChEaT_OwNeR
+
+📞 SUPPORT :
+http://BESTCHEAT_OWNER.t.me
+"""
+    )
+except:
+    pass
 # =========================
 # AUDIO
 # =========================
