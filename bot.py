@@ -126,7 +126,7 @@ def save_user(user):
 
         users[user_id]["last_active"] = current_time
 
-save_users(users)
+    save_users(users)
 
 def clean_filename(name):
     return re.sub(r'[\\/*?:"<>|]', "", name)
