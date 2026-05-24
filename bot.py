@@ -149,10 +149,10 @@ HELP_TEXT = """
 ━━━━━━━━━━━━━━━━━━━
 
 🎵 AUDIO:
-`/play song name`
+`/play Golden Brown`
 
 🎬 VIDEO:
-`/video song name`
+`/video Saiyaara`
 
 📚 HELP:
 `/help`
@@ -220,7 +220,7 @@ async def start(client, message: Message):
     if message.from_user.id == OWNER_ID:
         buttons.append([
             InlineKeyboardButton(
-                "👑 OWNER PANEL",
+                "👑 AuRa KaRtiK FaTheR ❄️",
                 callback_data="owner_panel"
             )
         ])
@@ -287,7 +287,7 @@ async def main_menu(client, query: CallbackQuery):
     if query.from_user.id == OWNER_ID:
         buttons.append([
             InlineKeyboardButton(
-                "👑 OWNER PANEL",
+                "👑 AuRa KaRTiK FaTheR ❄️",
                 callback_data="owner_panel"
             )
         ])
@@ -346,7 +346,7 @@ async def owner_panel(client, query: CallbackQuery):
     ])
 
     await query.message.edit_text(
-        "👑 OWNER CONTROL PANEL",
+        "👑 AuRa KaRtiK FaTheR ❄️",
         reply_markup=buttons
     )
 
@@ -566,7 +566,7 @@ async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/play Alan Walker`"
+            "❌ Example:\n`/play Golden Brown`"
         )
 
     query = " ".join(message.command[1:])
@@ -594,24 +594,39 @@ async def play(client, message: Message):
         url = f"https://youtube.com/watch?v={song['id']}"
 
         ydl_opts = {
-            "format": "bestaudio/best",
-            "outtmpl": f"downloads/{title}.%(ext)s",
-            "quiet": True,
-            "noplaylist": True,
-            "geo_bypass": True,
-            "nocheckcertificate": True,
-            "retries": 10,
-            "extractor_retries": 10,
-            "fragment_retries": 10,
-            "http_headers": {
-                "User-Agent": "com.google.android.youtube/17.31.35"
-            },
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android"]
-                }
-            }
+          "format": "bestaudio/best",
+
+         "outtmpl": "downloads/%(title)s.%(ext)s",
+
+         "cookiefile": "cookies.txt",
+
+         "quiet": True,
+         "noplaylist": True,
+
+    "geo_bypass": True,
+    "nocheckcertificate": True,
+
+    "retries": 10,
+
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+    },
+
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
         }
+    },
+
+    "postprocessors": [{
+        "key": "FFmpegExtractAudio",
+        "preferredcodec": "mp3",
+        "preferredquality": "192",
+    }],
+
+    "prefer_ffmpeg": True,
+    "keepvideo": False
+}
 
         await msg.edit_text(
             "📥 DOWNLOADING AUDIO..."
