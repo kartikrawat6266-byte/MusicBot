@@ -644,11 +644,10 @@ async def play(client, message: Message):
         )
 
         await message.reply_audio(
-            audio=file_path,
-            title=title,
-            performer="Premium Music Bot",
-            mime_type="audio/mpeg",
-            caption=f"""
+        audio=file_path,
+        title=title,
+        performer="Premium Music Bot",
+        caption=f"""
 🎧 PREMIUM MUSIC
 
 ━━━━━━━━━━━━━━━━━━━
@@ -664,7 +663,7 @@ ONLINE
 👑 OWNER:
 @BeStChEaT_OwNeR
 """
-        )
+)
 
         await msg.delete()
 
