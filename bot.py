@@ -1,11 +1,14 @@
 # =========================
 # PREMIUM MUSIC BOT
-# FULL FIXED VERSION
-# AUDIO + VIDEO WORKING
-# YOUTUBE ERROR FIXED
+# FULLY FIXED FINAL VERSION
+# ALL FEATURES ADDED
+# YOUTUBE BOT CHECK FIXED
+# BAN / UNBAN MESSAGE ADDED
+# AUDIO + VIDEO FIXED
 # =========================
 
 import os
+import re
 import time
 import json
 import asyncio
@@ -51,7 +54,6 @@ os.makedirs("downloads", exist_ok=True)
 
 USERS_FILE = "users.json"
 BANNED_FILE = "banned.json"
-COOKIES_FILE = "cookies.txt"
 
 if not os.path.exists(USERS_FILE):
     with open(USERS_FILE, "w") as f:
@@ -110,6 +112,9 @@ def save_user(user):
 
         save_users(users)
 
+def clean_filename(name):
+    return re.sub(r'[\\/*?:"<>|]', "", name)
+
 # =========================
 # TEXTS
 # =========================
@@ -126,7 +131,7 @@ START_TEXT = """
 ━━━━━━━━━━━━━━━━━━━
 
 🎵 AUDIO:
-`/audio song name`
+`/play song name`
 
 🎬 VIDEO:
 `/video song name`
@@ -144,7 +149,7 @@ HELP_TEXT = """
 ━━━━━━━━━━━━━━━━━━━
 
 🎵 AUDIO:
-`/audio song name`
+`/play song name`
 
 🎬 VIDEO:
 `/video song name`
@@ -157,10 +162,11 @@ HELP_TEXT = """
 ⚡ FEATURES:
 • HQ Audio
 • HD Video
-• Live Download Speed
-• Live Download Progress
-• Live Ping
-• Instant Upload
+• Live Download
+• Fast Upload
+• Owner Panel
+• Ban / Unban
+• User History
 • 24/7 Online
 
 ━━━━━━━━━━━━━━━━━━━
@@ -171,10 +177,30 @@ HELP_TEXT = """
 
 BAN_TEXT = """
 🚫 ACCESS BLOCKED
+
+━━━━━━━━━━━━━━━━━━━
+
+❌ YOU ARE BANNED
+FROM USING THIS BOT
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
 """
 
 UNBAN_TEXT = """
 ✅ ACCESS RESTORED
+
+━━━━━━━━━━━━━━━━━━━
+
+🎉 YOU CAN USE
+THE BOT AGAIN
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
 """
 
 # =========================
@@ -335,6 +361,9 @@ async def users(client, query: CallbackQuery):
 
     text = "👥 USER HISTORY\n\n"
 
+    if not users:
+        text += "❌ NO USERS"
+
     for user_id, data in users.items():
 
         text += f"""
@@ -353,7 +382,97 @@ async def users(client, query: CallbackQuery):
 ━━━━━━━━━━━━━━━━━━━
 """
 
-    await query.message.edit_text(text[:4000])
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="owner_panel"
+            )
+        ]
+    ])
+
+    await query.message.edit_text(
+        text[:4000],
+        reply_markup=buttons
+    )
+
+# =========================
+# BANNED USERS
+# =========================
+
+@app.on_callback_query(filters.regex("banned_history"))
+async def banned_history(client, query: CallbackQuery):
+
+    banned = load_banned()
+
+    text = "📜 BANNED USERS\n\n"
+
+    if not banned:
+        text += "❌ NO BANNED USERS"
+
+    for user_id, data in banned.items():
+
+        text += f"""
+🆔 USER ID:
+{user_id}
+
+📅 BANNED:
+{data['time']}
+
+━━━━━━━━━━━━━━━━━━━
+"""
+
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton(
+                "⬅️ Back",
+                callback_data="owner_panel"
+            )
+        ]
+    ])
+
+    await query.message.edit_text(
+        text[:4000],
+        reply_markup=buttons
+    )
+
+# =========================
+# BAN INFO
+# =========================
+
+@app.on_callback_query(filters.regex("ban_info"))
+async def ban_info(client, query: CallbackQuery):
+
+    await query.message.edit_text(
+        "🚫 USE:\n`/ban user_id`",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "⬅️ Back",
+                    callback_data="owner_panel"
+                )
+            ]
+        ])
+    )
+
+# =========================
+# UNBAN INFO
+# =========================
+
+@app.on_callback_query(filters.regex("unban_info"))
+async def unban_info(client, query: CallbackQuery):
+
+    await query.message.edit_text(
+        "✅ USE:\n`/unban user_id`",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "⬅️ Back",
+                    callback_data="owner_panel"
+                )
+            ]
+        ])
+    )
 
 # =========================
 # BAN
@@ -372,6 +491,11 @@ async def ban(client, message: Message):
 
     user_id = int(message.command[1])
 
+    if user_id == OWNER_ID:
+        return await message.reply_text(
+            "❌ OWNER CANNOT BE BANNED"
+        )
+
     banned = load_banned()
 
     banned[str(user_id)] = {
@@ -385,6 +509,14 @@ async def ban(client, message: Message):
     await message.reply_text(
         "🚫 USER BANNED SUCCESSFULLY"
     )
+
+    try:
+        await app.send_message(
+            user_id,
+            BAN_TEXT
+        )
+    except:
+        pass
 
 # =========================
 # UNBAN
@@ -414,48 +546,27 @@ async def unban(client, message: Message):
         "✅ USER UNBANNED SUCCESSFULLY"
     )
 
-# =========================
-# YTDLP OPTIONS
-# =========================
-
-def get_ydl_opts(progress_hook, is_video=False):
-
-    fmt = (
-        "bestvideo+bestaudio/best"
-        if is_video else
-        "bestaudio/best"
-    )
-
-    opts = {
-        "format": fmt,
-        "outtmpl": "downloads/%(title)s.%(ext)s",
-        "quiet": True,
-        "noplaylist": True,
-        "geo_bypass": True,
-        "nocheckcertificate": True,
-        "retries": 10,
-        "fragment_retries": 10,
-        "progress_hooks": [progress_hook]
-    }
-
-    if os.path.exists(COOKIES_FILE):
-        opts["cookiefile"] = COOKIES_FILE
-
-    return opts
+    try:
+        await app.send_message(
+            user_id,
+            UNBAN_TEXT
+        )
+    except:
+        pass
 
 # =========================
 # AUDIO
 # =========================
 
-@app.on_message(filters.command("audio"))
-async def audio(client, message: Message):
+@app.on_message(filters.command("play"))
+async def play(client, message: Message):
 
     if is_banned(message.from_user.id):
         return await message.reply_text(BAN_TEXT)
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/audio Alan Walker`"
+            "❌ Example:\n`/play Alan Walker`"
         )
 
     query = " ".join(message.command[1:])
@@ -478,22 +589,33 @@ async def audio(client, message: Message):
 
         song = results[0]
 
-        title = song["title"]
+        title = clean_filename(song["title"])
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        def progress_hook(d):
-            pass
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": f"downloads/{title}.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
+            "http_headers": {
+                "User-Agent": "com.google.android.youtube/17.31.35"
+            },
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android"]
+                }
+            }
+        }
 
-        ydl_opts = get_ydl_opts(progress_hook)
-
-        ydl_opts.update({
-            "postprocessors": [{
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-                "preferredquality": "192",
-            }]
-        })
+        await msg.edit_text(
+            "📥 DOWNLOADING AUDIO..."
+        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -502,11 +624,12 @@ async def audio(client, message: Message):
                 download=True
             )
 
-            downloaded_file = ydl.prepare_filename(info)
+            file_path = ydl.prepare_filename(info)
 
-            base = os.path.splitext(downloaded_file)[0]
-
-            file_path = f"{base}.mp3"
+        if not os.path.exists(file_path):
+            return await msg.edit_text(
+                "❌ AUDIO DOWNLOAD FAILED"
+            )
 
         await msg.edit_text(
             "📤 UPLOADING AUDIO..."
@@ -515,7 +638,23 @@ async def audio(client, message: Message):
         await message.reply_audio(
             audio=file_path,
             title=title,
-            performer="Premium Music Bot"
+            performer="Premium Music Bot",
+            caption=f"""
+🎧 PREMIUM MUSIC
+
+━━━━━━━━━━━━━━━━━━━
+
+🎵 SONG:
+{title}
+
+📡 SERVER:
+ONLINE
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
         )
 
         await msg.delete()
@@ -530,7 +669,7 @@ async def audio(client, message: Message):
         print(e)
 
         await msg.edit_text(
-            f"❌ ERROR:\n{e}"
+            f"❌ DOWNLOAD FAILED\n\n{e}"
         )
 
 # =========================
@@ -568,16 +707,32 @@ async def video(client, message: Message):
 
         song = results[0]
 
-        title = song["title"]
+        title = clean_filename(song["title"])
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        def progress_hook(d):
-            pass
+        ydl_opts = {
+            "format": "best[ext=mp4]/best",
+            "outtmpl": f"downloads/{title}.%(ext)s",
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
+            "http_headers": {
+                "User-Agent": "com.google.android.youtube/17.31.35"
+            },
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android"]
+                }
+            }
+        }
 
-        ydl_opts = get_ydl_opts(
-            progress_hook,
-            is_video=True
+        await msg.edit_text(
+            "📥 DOWNLOADING VIDEO..."
         )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -589,6 +744,11 @@ async def video(client, message: Message):
 
             file_path = ydl.prepare_filename(info)
 
+        if not os.path.exists(file_path):
+            return await msg.edit_text(
+                "❌ VIDEO DOWNLOAD FAILED"
+            )
+
         await msg.edit_text(
             "📤 UPLOADING VIDEO..."
         )
@@ -596,7 +756,22 @@ async def video(client, message: Message):
         await message.reply_video(
             video=file_path,
             supports_streaming=True,
-            caption=f"🎬 {title}"
+            caption=f"""
+🎬 PREMIUM VIDEO
+
+━━━━━━━━━━━━━━━━━━━
+
+🎥 VIDEO:
+{title}
+
+📡 SERVER:
+ONLINE
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+@BeStChEaT_OwNeR
+"""
         )
 
         await msg.delete()
@@ -611,8 +786,12 @@ async def video(client, message: Message):
         print(e)
 
         await msg.edit_text(
-            f"❌ ERROR:\n{e}"
+            f"❌ DOWNLOAD FAILED\n\n{e}"
         )
+
+# =========================
+# RUN
+# =========================
 
 print("✅ Premium Music Bot Running")
 
