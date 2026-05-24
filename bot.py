@@ -796,29 +796,28 @@ ydl_opts = {
         "youtube": {
             "player_client": ["android"]
         }
-    }
+    },
+
+    "progress_hooks": [progress_hook]
 }
 
-            "progress_hooks": [progress_hook]
-        }
+with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    info = ydl.extract_info(
+        url,
+        download=True
+    )
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
+    downloaded_file = ydl.prepare_filename(info)
 
-            downloaded_file = ydl.prepare_filename(info)
+    file_path = os.path.splitext(
+        downloaded_file
+    )[0] + ".mp3"
 
-            file_path = os.path.splitext(
-                downloaded_file
-            )[0] + ".mp3"
-
-        if not os.path.exists(file_path):
-            return await msg.edit_text(
-                "❌ AUDIO DOWNLOAD FAILED"
-            )
+if not os.path.exists(file_path):
+    return await msg.edit_text(
+        "❌ AUDIO DOWNLOAD FAILED"
+    )
 
         await msg.edit_text(
             """
