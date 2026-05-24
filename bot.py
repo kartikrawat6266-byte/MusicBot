@@ -775,23 +775,25 @@ async def play(client, message: Message):
                     ),
                     app.loop
                 )
-
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": f"downloads/{title}.%(ext)s",
-            "noplaylist": True,
-            "extract_flat": False,
-            "quiet": True,
-            "nocheckcertificate": True,
-            "no_warnings": True,
-            "geo_bypass": True,
-            "geo_bypass_country": "IN",
-            "retries": 10,
-            "extractor_retries": 10,
-            "fragment_retries": 10,
-            "http_headers": {
-                "User-Agent": "Mozilla/5.0"
-            },
+
+            "cookiefile": "cookies.txt",
+
+           "noplaylist": True,
+           "extract_flat": False,
+           "quiet": True,
+          "nocheckcertificate": True,
+          "no_warnings": True,
+          "geo_bypass": True,
+         "geo_bypass_country": "IN",
+         "retries": 10,
+         "extractor_retries": 10,
+         "fragment_retries": 10,
+         "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+         },
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android"]
