@@ -786,6 +786,7 @@ ydl_opts = {
     "extractaudio": True,
     "audioformat": "mp3",
     "audioquality": "192K",
+
     "cookiefile": "cookies.txt",
 
     "http_headers": {
@@ -819,7 +820,7 @@ if not os.path.exists(file_path):
         "❌ AUDIO DOWNLOAD FAILED"
     )
 
-        await msg.edit_text(
+await msg.edit_text(
             """
 ╔════════════════════╗
     📤 UPLOADING AUDIO
