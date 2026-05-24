@@ -1,5 +1,6 @@
-yt-dlp
-youtube-search
 pyrogram
 tgcrypto
+yt-dlp
+youtube-search
+ffmpeg-python
 pytz
