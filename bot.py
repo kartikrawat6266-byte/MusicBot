@@ -806,37 +806,37 @@ async def play(client, message: Message):
             "progress_hooks": [progress_hook]
         }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            info = ydl.extract_info(
-           url,
-           download=True
-           )
-    
-            downloaded_file = ydl.prepare_filename(info)
+    info = ydl.extract_info(
+        url,
+        download=True
+    )
 
-            base = os.path.splitext(downloaded_file)[0]
+    downloaded_file = ydl.prepare_filename(info)
 
-             possible_files = [
-             base + ".mp3",
-             base + ".m4a",
-              base + ".webm"
-              ]
+    base = os.path.splitext(downloaded_file)[0]
 
-             file_path = None
+    possible_files = [
+        base + ".mp3",
+        base + ".m4a",
+        base + ".webm"
+    ]
 
-            for f in possible_files:
-            if os.path.exists(f):
+    file_path = None
+
+    for f in possible_files:
+        if os.path.exists(f):
             file_path = f
             break
 
-           if not file_path:
-           return await msg.edit_text(
+if not file_path:
+    return await msg.edit_text(
         "❌ AUDIO DOWNLOAD FAILED"
     )
 
-        await msg.edit_text(
-            """
+await msg.edit_text(
+    """
 ╔════════════════════╗
     📤 UPLOADING AUDIO
 ╚════════════════════╝
@@ -844,7 +844,7 @@ async def play(client, message: Message):
 ⚡ STATUS:
 ➜ SENDING AUDIO...
 """
-        )
+)
 
         await message.reply_audio(
             audio=file_path,
