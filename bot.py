@@ -638,7 +638,7 @@ http://BESTCHEAT_OWNER.t.me
 # AUDIO
 # =========================
 
-@app.on_message(filters.command("play"))
+@app.on_message(filters.command("audio"))
 async def play(client, message: Message):
 
     if is_banned(message.from_user.id):
@@ -646,7 +646,7 @@ async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/play Alan Walker`"
+            "❌ Example:\n`/audio Golden Brown`"
         )
 
     query = " ".join(message.command[1:])
