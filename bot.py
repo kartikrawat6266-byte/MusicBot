@@ -486,7 +486,7 @@ async def ban(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ USE:\n`/unban user_id`"
+            "❌ USE:\n`/ban user_id`"
         )
 
     user_id = int(message.command[1])
@@ -509,14 +509,6 @@ async def ban(client, message: Message):
     await message.reply_text(
         "🚫 USER BANNED SUCCESSFULLY"
     )
-
-    try:
-        await app.send_message(
-            user_id,
-            BAN_TEXT
-        )
-    except:
-        pass
 
 # =========================
 # UNBAN
@@ -545,15 +537,6 @@ async def unban(client, message: Message):
     await message.reply_text(
         "✅ USER UNBANNED SUCCESSFULLY"
     )
-
-    try:
-        await app.send_message(
-            user_id,
-            UNBAN_TEXT
-        )
-    except:
-        pass
-
 
 # =========================
 # AUDIO
@@ -594,40 +577,32 @@ async def play(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-       ydl_opts = {
-        
-     "format": "bestaudio/best",
-     "outtmpl": "downloads/%(title)s.%(ext)s",
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "outtmpl": "downloads/%(title)s.%(ext)s",
 
-      "cookiefile": "cookies.txt",
+            "cookiefile": "cookies.txt",
 
-      "quiet": True,
-      "noplaylist": True,
-      "geo_bypass": True,
-       "nocheckcertificate": True,
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
 
-       "retries": 10,
-       "extractor_retries": 10,
-       "fragment_retries": 10,
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
 
-        "postprocessors": [{
-        "key": "FFmpegExtractAudio",
-        "preferredcodec": "mp3",
-        "preferredquality": "192",
-         }],
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }],
 
-          "prefer_ffmpeg": True,
-          "keepvideo": False,
+            "prefer_ffmpeg": True,
+            "keepvideo": False,
 
-           "http_headers": {
-           "User-Agent": "Mozilla/5.0"
-            }
-            }
-
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android"]
-                }
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0"
             }
         }
 
@@ -732,30 +707,23 @@ async def video(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
-        
-      ydl_opts = {
-       "format": "best[ext=mp4]/best",
-       "outtmpl": f"downloads/{title}.%(ext)s",
+        ydl_opts = {
+            "format": "best[ext=mp4]/best",
+            "outtmpl": f"downloads/{title}.%(ext)s",
 
-       "cookiefile": "cookies.txt",
+            "cookiefile": "cookies.txt",
 
-       "quiet": True,
-       "noplaylist": True,
-        "geo_bypass": True,
-        "nocheckcertificate": True,
+            "quiet": True,
+            "noplaylist": True,
+            "geo_bypass": True,
+            "nocheckcertificate": True,
 
-         "retries": 10,
-        "extractor_retries": 10,
-         "fragment_retries": 10,
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
 
-          "http_headers": {
-          "User-Agent": "Mozilla/5.0"
-           }
-           }
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android"]
-                }
+            "http_headers": {
+                "User-Agent": "Mozilla/5.0"
             }
         }
 
