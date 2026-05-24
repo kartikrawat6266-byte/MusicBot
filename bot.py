@@ -775,44 +775,54 @@ async def play(client, message: Message):
                 )
 
 ydl_opts = {
-            "format": "bestaudio[ext=m4a]/bestaudio/best",
-            "outtmpl": "%(title)s.%(ext)s",
-            "noplaylist": True,
-            "quiet": True,
-            "nocheckcertificate": True,
-            "no_warnings": True,
-            "geo_bypass": True,
-            "extractaudio": True,
-            "audioformat": "mp3",
-            "audioquality": "192K",
+    "format": "bestaudio[ext=m4a]/bestaudio/best",
+    "outtmpl": "%(title)s.%(ext)s",
+    "noplaylist": True,
+    "quiet": True,
+    "nocheckcertificate": True,
+    "no_warnings": True,
+    "geo_bypass": True,
+    "geo_bypass_country": "IN",
+    "extractaudio": True,
+    "audioformat": "mp3",
+    "audioquality": "192K",
 
-            "cookiefile": "cookies.txt",
+    "retries": 10,
+    "extractor_retries": 10,
+    "fragment_retries": 10,
 
-            "http_headers": {
-                "User-Agent": "Mozilla/5.0"
-            },
+    "cookiefile": "cookies.txt",
 
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"]
-                }
-            },
+    "http_headers": {
+        "User-Agent": "Mozilla/5.0"
+    },
 
-            "progress_hooks": [progress_hook]
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android", "web"]
         }
+    },
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    "progress_hooks": [progress_hook]
+}
 
-            info = ydl.extract_info(
-                url,
-                download=True
-            )
+with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
-            downloaded_file = ydl.prepare_filename(info)
+    info = ydl.extract_info(
+        url,
+        download=True
+    )
 
-            file_path = os.path.splitext(
-                downloaded_file
-            )[0] + ".mp3"
+    if not info:
+        return await msg.edit_text(
+            "❌ AUDIO DOWNLOAD FAILED"
+        )
+
+    downloaded_file = ydl.prepare_filename(info)
+
+    file_path = os.path.splitext(
+        downloaded_file
+    )[0] + ".mp3"
 
         if not os.path.exists(file_path):
             return await msg.edit_text(
