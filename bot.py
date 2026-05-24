@@ -807,8 +807,20 @@ async def video(client, message: Message):
 
     query = " ".join(message.command[1:])
 
+    start_time = time.time()
+
     msg = await message.reply_text(
-        f"🔍 SEARCHING VIDEO...\n\n🎬 {query}"
+        f"""
+╔════════════════════╗
+  🔍 SEARCHING VIDEO 🔍
+╚════════════════════╝
+
+🎬 VIDEO:
+➜ {query}
+
+⚡ STATUS:
+➜ SEARCHING...
+"""
     )
 
     try:
@@ -829,8 +841,96 @@ async def video(client, message: Message):
 
         url = f"https://youtube.com/watch?v={song['id']}"
 
+        async def update_progress(text):
+            try:
+                await msg.edit_text(text)
+            except:
+                pass
+
+        def progress_hook(d):
+
+            if d['status'] == 'downloading':
+
+                downloaded = d.get(
+                    '_downloaded_bytes_str',
+                    '0MB'
+                )
+
+                total = d.get(
+                    '_total_bytes_str',
+                    'Unknown'
+                )
+
+                speed = d.get(
+                    '_speed_str',
+                    '0MB/s'
+                )
+
+                percent = d.get(
+                    '_percent_str',
+                    '0%'
+                )
+
+                eta = d.get(
+                    '_eta_str',
+                    '0s'
+                )
+
+                ping = round(
+                    (time.time() - start_time) * 1000
+                )
+
+                asyncio.run_coroutine_threadsafe(
+                    update_progress(
+                        f"""
+╔══════════════════════╗
+    🎬 PREMIUM VIDEO 🎬
+╚══════════════════════╝
+
+🎥 VIDEO NAME:
+➜ {title}
+
+━━━━━━━━━━━━━━━━━━━
+
+📥 DOWNLOADED:
+➜ {downloaded} / {total}
+
+📊 PROGRESS:
+➜ {percent}
+
+🚀 DOWNLOAD SPEED:
+➜ {speed}
+
+⏳ TIME LEFT:
+➜ {eta}
+
+🏓 LIVE PING:
+➜ {ping} ms
+
+━━━━━━━━━━━━━━━━━━━
+
+⚡ STATUS:
+➜ DOWNLOADING VIDEO...
+
+📡 SERVER:
+➜ ONLINE 24/7
+
+━━━━━━━━━━━━━━━━━━━
+
+👑 OWNER:
+➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+➜  〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
+"""
+                    ),
+                    app.loop
+                )
+
         ydl_opts = {
-            "format": "bestvideo+bestaudio/best",
+
+            "format": "best[ext=mp4]/best",
+
             "outtmpl": f"downloads/{title}.%(ext)s",
 
             "cookiefile": "cookies.txt",
@@ -840,32 +940,32 @@ async def video(client, message: Message):
             "geo_bypass": True,
             "nocheckcertificate": True,
 
-            "retries": 15,
-            "extractor_retries": 15,
-            "fragment_retries": 15,
-
-            "sleep_interval": 2,
-            "max_sleep_interval": 5,
-
-            "merge_output_format": "mp4",
+            "retries": 10,
+            "extractor_retries": 10,
+            "fragment_retries": 10,
 
             "http_headers": {
-                "User-Agent": (
-                    "Mozilla/5.0 (Linux; Android 13; SM-S918B) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Mobile Safari/537.36"
-                )
+                "User-Agent": "Mozilla/5.0"
             },
 
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android", "web"]
+                    "player_client": ["android"]
                 }
-            }
+            },
+
+            "progress_hooks": [progress_hook]
         }
 
         await msg.edit_text(
-            "📥 DOWNLOADING VIDEO..."
+            """
+╔════════════════════╗
+    📥 DOWNLOADING 📤
+╚════════════════════╝
+
+⚡ STATUS:
+➜ FETCHING VIDEO...
+"""
         )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -883,27 +983,44 @@ async def video(client, message: Message):
             )
 
         await msg.edit_text(
-            "📤 UPLOADING VIDEO..."
+            """
+╔════════════════════╗
+  📤 UPLOADING VIDEO 📤
+╚════════════════════╝
+
+⚡ STATUS:
+➜ SENDING VIDEO...
+"""
         )
 
         await message.reply_video(
             video=file_path,
             supports_streaming=True,
+            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
             caption=f"""
-🎬 PREMIUM VIDEO
+╔══════════════════╗
+  🎬 PREMIUM VIDEO 🎬
+╚══════════════════╝
 
-━━━━━━━━━━━━━━━━━━━
+🎥 VIDEO NAME:
+➜ {title}
 
-🎥 VIDEO:
-{title}
+⚡ STATUS:
+➜ SUCCESSFULLY DOWNLOADED
 
-📡 SERVER:
-ONLINE
+🚀 SERVER:
+➜ ULTRA FAST
+
+📡 QUALITY:
+➜ HD VIDEO
 
 ━━━━━━━━━━━━━━━━━━━
 
 👑 OWNER:
-@BeStChEaT_OwNeR
+➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
         )
 
