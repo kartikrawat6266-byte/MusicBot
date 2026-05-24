@@ -3,3 +3,4 @@ tgcrypto
 yt-dlp
 youtube-search
 ffmpeg-python
+pytz
