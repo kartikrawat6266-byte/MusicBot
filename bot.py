@@ -545,7 +545,8 @@ async def ban(client, message: Message):
     await message.reply_text(
         "🚫 USER BANNED SUCCESSFULLY"
     )
-    try:
+    
+try:
     await client.send_message(
         user_id,
         """
