@@ -1,3 +1,6 @@
+pyrogram
+tgcrypto
+youtube-search
 yt-dlp
-Pyrogram
-TgCrypto
+ffmpeg-python
+requests
