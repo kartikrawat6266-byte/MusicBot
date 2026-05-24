@@ -1017,13 +1017,13 @@ async def video(client, message: Message):
 ➜ @BeStChEaT_OwNeR
 
 💎 POWERED BY:
-➜  〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
+➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
                 )
 
-ydl_opts = {
+        ydl_opts = {
 
             "format": "best[ext=mp4]/best",
 
@@ -1056,7 +1056,7 @@ ydl_opts = {
         await msg.edit_text(
             """
 ╔════════════════════╗
-    📥 DOWNLOADING 📤
+    📥 DOWNLOADING 📥
 ╚════════════════════╝
 
 ⚡ STATUS:
@@ -1070,6 +1070,11 @@ ydl_opts = {
                 url,
                 download=True
             )
+
+            if not info:
+                return await msg.edit_text(
+                    "❌ VIDEO DOWNLOAD FAILED"
+                )
 
             file_path = ydl.prepare_filename(info)
 
@@ -1133,7 +1138,7 @@ ydl_opts = {
         await msg.edit_text(
             f"❌ DOWNLOAD FAILED\n\n{e}"
         )
-
+            
 # =========================
 # RUN
 # =========================
