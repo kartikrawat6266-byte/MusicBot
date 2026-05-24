@@ -1,5 +1,7 @@
 pyrogram
 tgcrypto
 yt-dlp
-youtube-search
+youtube-search-python
 ffmpeg-python
+requests
+aiohttp
