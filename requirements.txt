@@ -1,8 +1,7 @@
 pyrogram
 tgcrypto
-yt-dlp
 youtube-search
-ffmpeg-python
+yt-dlp
+requests
 pytz
-yt-dlp>=2025.5.22
 python-dotenv
