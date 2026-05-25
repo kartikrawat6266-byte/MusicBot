@@ -29,7 +29,7 @@ import yt_dlp
 
 # =========================
 # INDIA TIMEZONE
-# =API_ID========================
+# =========================
 
 IST = pytz.timezone("Asia/Kolkata")
 
@@ -41,11 +41,6 @@ def get_ist_time():
 # =========================
 # CONFIG
 # =========================
-
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -646,6 +641,12 @@ http://BESTCHEAT_OWNER.t.me
 # AUDIO
 # =========================
 
+# =========================
+# FIXED AUDIO SECTION
+# PASTE THIS IN PLACE OF
+# OLD /audio FUNCTION
+# =========================
+
 @app.on_message(filters.command("audio"))
 async def play(client, message: Message):
 
@@ -692,21 +693,6 @@ async def play(client, message: Message):
         title = clean_filename(song["title"])
 
         url = f"https://youtube.com/watch?v={song['id']}"
-
-        # =========================
-        # THUMBNAIL DOWNLOAD
-        # =========================
-
-        import requests
-
-        thumbnail = f"https://i.ytimg.com/vi/{song['id']}/hqdefault.jpg"
-
-        thumb_path = f"downloads/{title}.jpg"
-
-        response = requests.get(thumbnail)
-
-        with open(thumb_path, "wb") as f:
-            f.write(response.content)
 
         async def update_progress(text):
             try:
@@ -786,6 +772,9 @@ async def play(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
+
+💎 POWERED BY:
+➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
@@ -793,18 +782,15 @@ async def play(client, message: Message):
 
         ydl_opts = {
 
-            "format": "140/bestaudio/best",
+            "format": "bestaudio/best",
 
             "outtmpl": f"downloads/{title}.%(ext)s",
 
             "noplaylist": True,
-            "extract_flat": False,
-
             "quiet": True,
-            "no_warnings": True,
-            "logger": None,
-
             "nocheckcertificate": True,
+            "no_warnings": True,
+
             "geo_bypass": True,
             "geo_bypass_country": "IN",
 
@@ -821,8 +807,6 @@ async def play(client, message: Message):
                     "player_client": ["android"]
                 }
             },
-
-            "cookiefile": "cookies.txt",
 
             "progress_hooks": [progress_hook],
 
@@ -878,7 +862,7 @@ async def play(client, message: Message):
         await msg.edit_text(
             """
 ╔════════════════════╗
-  📤 UPLOADING AUDIO 📤
+    📤 UPLOADING AUDIO
 ╚════════════════════╝
 
 ⚡ STATUS:
@@ -886,7 +870,12 @@ async def play(client, message: Message):
 """
         )
 
-        caption = f"""
+        await message.reply_audio(
+            audio=file_path,
+            title=title,
+            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
+
+            caption=f"""
 ╔══════════════════╗
   🎧 PREMIUM MUSIC 🎧
 ╚══════════════════╝
@@ -907,14 +896,10 @@ async def play(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-"""
 
-        await message.reply_audio(
-            audio=file_path,
-            title=title,
-            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐫𝐓𝐢𝐊 🜲",
-            caption=caption,
-            thumb=thumb_path
+💎 POWERED BY:
+⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
+"""
         )
 
         await msg.delete()
@@ -924,30 +909,13 @@ async def play(client, message: Message):
         except:
             pass
 
-        try:
-            os.remove(thumb_path)
-        except:
-            pass
-
     except Exception as e:
 
-        error_text = str(e)
+        print(e)
 
-        print(error_text)
-
-        if "Sign in to confirm you're not a bot" in error_text:
-
-            await message.reply_text(
-                "❌ DOWNLOAD FAILED\n\n"
-                "⚠️ YouTube blocked request.\n"
-                "✅ Add valid cookies.txt file."
-            )
-
-        else:
-
-            await message.reply_text(
-                f"❌ ERROR:\n{error_text[:300]}"
-            )
+        await msg.edit_text(
+            f"❌ DOWNLOAD FAILED\n\n{e}"
+        )
         
 # =========================
 # VIDEO
