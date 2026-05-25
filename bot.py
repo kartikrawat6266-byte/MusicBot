@@ -3,8 +3,9 @@
 # FULLY FIXED FINAL VERSION
 # INDIA TIMEZONE FIXED
 # JOIN TIME FIXED
-# BAN TIME FIXED
-# HISTORY TIME FIXED
+# HISTORY FIXED
+# BAN/UNBAN BUTTON FIXED
+# PREMIUM POPUP FIXED
 # =========================
 
 import os
@@ -13,6 +14,8 @@ import time
 import json
 import asyncio
 import pytz
+import requests
+import logging
 
 from datetime import datetime
 
@@ -28,6 +31,12 @@ from youtube_search import YoutubeSearch
 import yt_dlp
 
 # =========================
+# LOGS
+# =========================
+
+logging.getLogger("pyrogram").setLevel(logging.ERROR)
+
+# =========================
 # INDIA TIMEZONE
 # =========================
 
@@ -41,6 +50,10 @@ def get_ist_time():
 # =========================
 # CONFIG
 # =========================
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
@@ -211,20 +224,6 @@ FROM USING THIS BOT
 @BeStChEaT_OwNeR
 """
 
-UNBAN_TEXT = """
-✅ ACCESS RESTORED
-
-━━━━━━━━━━━━━━━━━━━
-
-🎉 YOU CAN USE
-THE BOT AGAIN
-
-━━━━━━━━━━━━━━━━━━━
-
-👑 OWNER:
-@BeStChEaT_OwNeR
-"""
-
 # =========================
 # START
 # =========================
@@ -280,8 +279,10 @@ async def help_cmd(client, message: Message):
         reply_markup=buttons
     )
 
-@app.on_callback_query(filters.regex("help"))
+@app.on_callback_query(filters.regex("^help$"))
 async def help_callback(client, query: CallbackQuery):
+
+    await query.answer()
 
     buttons = InlineKeyboardMarkup([
         [
@@ -301,8 +302,10 @@ async def help_callback(client, query: CallbackQuery):
 # MAIN MENU
 # =========================
 
-@app.on_callback_query(filters.regex("main_menu"))
+@app.on_callback_query(filters.regex("^main_menu$"))
 async def main_menu(client, query: CallbackQuery):
+
+    await query.answer()
 
     buttons = []
 
@@ -330,8 +333,10 @@ async def main_menu(client, query: CallbackQuery):
 # OWNER PANEL
 # =========================
 
-@app.on_callback_query(filters.regex("owner_panel"))
+@app.on_callback_query(filters.regex("^owner_panel$"))
 async def owner_panel(client, query: CallbackQuery):
+
+    await query.answer()
 
     if query.from_user.id != OWNER_ID:
         return
@@ -376,30 +381,45 @@ async def owner_panel(client, query: CallbackQuery):
 # USERS
 # =========================
 
-@app.on_callback_query(filters.regex("users"))
+@app.on_callback_query(filters.regex("^users$"))
 async def users(client, query: CallbackQuery):
+
+    await query.answer()
 
     users = load_users()
 
     text = "👥 USER HISTORY\n\n"
 
     if not users:
-        text += "❌ NO USERS"
+        text += """
+╔════════════════════╗
+      ❌ NO USERS
+╚════════════════════╝
+"""
 
     for user_id, data in users.items():
 
+        username = data['username']
+
+        if username != "No Username":
+            username = f"@{username}"
+
         text += f"""
+
 👤 NAME:
 {data['name']}
 
 🔗 USERNAME:
-@{data['username']}
+{username}
 
 🆔 ID:
 {user_id}
 
 📅 JOIN TIME:
 {data['join_time']}
+
+🟢 LAST ACTIVE:
+{data['last_active']}
 
 ━━━━━━━━━━━━━━━━━━━
 """
@@ -422,8 +442,10 @@ async def users(client, query: CallbackQuery):
 # BANNED USERS
 # =========================
 
-@app.on_callback_query(filters.regex("banned_history"))
+@app.on_callback_query(filters.regex("^banned_history$"))
 async def banned_history(client, query: CallbackQuery):
+
+    await query.answer()
 
     banned = load_banned()
     users = load_users()
@@ -431,7 +453,11 @@ async def banned_history(client, query: CallbackQuery):
     text = "📜 BANNED USERS\n\n"
 
     if not banned:
-        text += "❌ NO BANNED USERS"
+        text += """
+╔════════════════════╗
+   ✅ NO BANNED USERS
+╚════════════════════╝
+"""
 
     for user_id, data in banned.items():
 
@@ -446,6 +472,7 @@ async def banned_history(client, query: CallbackQuery):
             username = f"@{username}"
 
         text += f"""
+
 👤 Telegram Name :
 {user_data.get('name', 'Unknown')}
 
@@ -476,41 +503,27 @@ async def banned_history(client, query: CallbackQuery):
     )
 
 # =========================
-# BAN INFO
+# BAN POPUP
 # =========================
 
-@app.on_callback_query(filters.regex("ban_info"))
+@app.on_callback_query(filters.regex("^ban_info$"))
 async def ban_info(client, query: CallbackQuery):
 
-    await query.message.edit_text(
-        "🚫 USE:\n`/ban user_id`",
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "⬅️ Back",
-                    callback_data="owner_panel"
-                )
-            ]
-        ])
+    await query.answer(
+        "🚫 Send /ban user_id",
+        show_alert=True
     )
 
 # =========================
-# UNBAN INFO
+# UNBAN POPUP
 # =========================
 
-@app.on_callback_query(filters.regex("unban_info"))
+@app.on_callback_query(filters.regex("^unban_info$"))
 async def unban_info(client, query: CallbackQuery):
 
-    await query.message.edit_text(
-        "✅ USE:\n`/unban user_id`",
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "⬅️ Back",
-                    callback_data="owner_panel"
-                )
-            ]
-        ])
+    await query.answer(
+        "✅ Send /unban user_id",
+        show_alert=True
     )
 
 # =========================
@@ -525,14 +538,28 @@ async def ban(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ USE:\n`/ban user_id`"
+"""
+╔════════════════════╗
+     ❌ INVALID FORMAT
+╚════════════════════╝
+
+✅ USE THIS FORMAT:
+
+➜ /ban user_id
+"""
         )
 
     user_id = int(message.command[1])
 
     if user_id == OWNER_ID:
         return await message.reply_text(
-            "❌ OWNER CANNOT BE BANNED"
+"""
+╔════════════════════╗
+   ❌ OWNER CANNOT BAN
+╚════════════════════╝
+
+👑 OWNER PROTECTION ENABLED
+"""
         )
 
     banned = load_banned()
@@ -544,16 +571,20 @@ async def ban(client, message: Message):
     save_banned(banned)
 
     await message.reply_text(
-        "🚫 USER BANNED SUCCESSFULLY"
+"""
+╔════════════════════╗
+    🚫 USER BANNED
+╚════════════════════╝
+"""
     )
 
     try:
         await client.send_message(
             user_id,
-            f"""
-🚫 ACCESS BLOCKED
-
-━━━━━━━━━━━━━━━━━━━
+f"""
+╔════════════════════╗
+      🚫 YOU ARE BANNED
+╚════════════════════╝
 
 ❌ YOUR ACCESS TO THIS
 BOT HAS BEEN SUSPENDED
@@ -590,7 +621,15 @@ async def unban(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ USE:\n`/unban user_id`"
+"""
+╔════════════════════╗
+     ❌ INVALID FORMAT
+╚════════════════════╝
+
+✅ USE THIS FORMAT:
+
+➜ /unban user_id
+"""
         )
 
     user_id = int(message.command[1])
@@ -603,16 +642,20 @@ async def unban(client, message: Message):
     save_banned(banned)
 
     await message.reply_text(
-        "✅ USER UNBANNED SUCCESSFULLY"
+"""
+╔════════════════════╗
+   ✅ USER UNBANNED
+╚════════════════════╝
+"""
     )
 
     try:
         await client.send_message(
             user_id,
-            f"""
-✅ ACCESS RESTORED
-
-━━━━━━━━━━━━━━━━━━━
+f"""
+╔════════════════════╗
+    ✅ ACCESS RESTORED
+╚════════════════════╝
 
 🎉 YOUR ACCESS HAS
 BEEN RESTORED
@@ -636,15 +679,9 @@ http://BESTCHEAT_OWNER.t.me
         )
     except:
         pass
-        
-# =========================
-# AUDIO
-# =========================
 
 # =========================
-# FIXED AUDIO SECTION
-# PASTE THIS IN PLACE OF
-# OLD /audio FUNCTION
+# AUDIO
 # =========================
 
 @app.on_message(filters.command("audio"))
@@ -655,7 +692,15 @@ async def play(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/audio Golden Brown`"
+"""
+╔════════════════════╗
+     ❌ INVALID FORMAT
+╚════════════════════╝
+
+✅ EXAMPLE:
+
+➜ /audio Golden Brown
+"""
         )
 
     query = " ".join(message.command[1:])
@@ -663,7 +708,7 @@ async def play(client, message: Message):
     start_time = time.time()
 
     msg = await message.reply_text(
-        f"""
+f"""
 ╔════════════════════╗
   🔍 SEARCHING AUDIO 🔍
 ╚════════════════════╝
@@ -685,7 +730,11 @@ async def play(client, message: Message):
 
         if not results:
             return await msg.edit_text(
-                "❌ SONG NOT FOUND"
+"""
+╔════════════════════╗
+      ❌ NOT FOUND
+╚════════════════════╝
+"""
             )
 
         song = results[0]
@@ -693,6 +742,15 @@ async def play(client, message: Message):
         title = clean_filename(song["title"])
 
         url = f"https://youtube.com/watch?v={song['id']}"
+
+        thumbnail = f"https://i.ytimg.com/vi/{song['id']}/hqdefault.jpg"
+
+        thumb_path = f"downloads/{title}.jpg"
+
+        response = requests.get(thumbnail)
+
+        with open(thumb_path, "wb") as f:
+            f.write(response.content)
 
         async def update_progress(text):
             try:
@@ -772,9 +830,6 @@ async def play(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
@@ -782,17 +837,18 @@ async def play(client, message: Message):
 
         ydl_opts = {
 
-            "format": "bestaudio/best",
+            "format": "140/bestaudio/best",
 
             "outtmpl": f"downloads/{title}.%(ext)s",
 
             "noplaylist": True,
+            "extract_flat": False,
+
             "quiet": True,
-            "nocheckcertificate": True,
             "no_warnings": True,
 
+            "nocheckcertificate": True,
             "geo_bypass": True,
-            "geo_bypass_country": "IN",
 
             "retries": 10,
             "extractor_retries": 10,
@@ -808,6 +864,8 @@ async def play(client, message: Message):
                 }
             },
 
+            "cookiefile": "cookies.txt",
+
             "progress_hooks": [progress_hook],
 
             "postprocessors": [{
@@ -816,17 +874,6 @@ async def play(client, message: Message):
                 "preferredquality": "192",
             }]
         }
-
-        await msg.edit_text(
-            """
-╔════════════════════╗
-    📥 DOWNLOADING 📥
-╚════════════════════╝
-
-⚡ STATUS:
-➜ FETCHING AUDIO...
-"""
-        )
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
@@ -856,13 +903,17 @@ async def play(client, message: Message):
 
         if not file_path:
             return await msg.edit_text(
-                "❌ AUDIO DOWNLOAD FAILED"
+"""
+╔════════════════════╗
+  ❌ DOWNLOAD FAILED
+╚════════════════════╝
+"""
             )
 
         await msg.edit_text(
-            """
+"""
 ╔════════════════════╗
-    📤 UPLOADING AUDIO
+  📤 UPLOADING AUDIO 📤
 ╚════════════════════╝
 
 ⚡ STATUS:
@@ -870,12 +921,7 @@ async def play(client, message: Message):
 """
         )
 
-        await message.reply_audio(
-            audio=file_path,
-            title=title,
-            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲",
-
-            caption=f"""
+        caption = f"""
 ╔══════════════════╗
   🎧 PREMIUM MUSIC 🎧
 ╚══════════════════╝
@@ -896,10 +942,14 @@ async def play(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
+
+        await message.reply_audio(
+            audio=file_path,
+            title=title,
+            performer="⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐫𝐓𝐢𝐊 🜲",
+            caption=caption,
+            thumb=thumb_path
         )
 
         await msg.delete()
@@ -909,14 +959,23 @@ async def play(client, message: Message):
         except:
             pass
 
+        try:
+            os.remove(thumb_path)
+        except:
+            pass
+
     except Exception as e:
 
-        print(e)
-
         await msg.edit_text(
-            f"❌ DOWNLOAD FAILED\n\n{e}"
+f"""
+╔════════════════════╗
+       ❌ ERROR
+╚════════════════════╝
+
+{str(e)[:300]}
+"""
         )
-        
+
 # =========================
 # VIDEO
 # =========================
@@ -929,7 +988,15 @@ async def video(client, message: Message):
 
     if len(message.command) < 2:
         return await message.reply_text(
-            "❌ Example:\n`/video Faded`"
+"""
+╔════════════════════╗
+     ❌ INVALID FORMAT
+╚════════════════════╝
+
+✅ EXAMPLE:
+
+➜ /video Faded
+"""
         )
 
     query = " ".join(message.command[1:])
@@ -937,7 +1004,7 @@ async def video(client, message: Message):
     start_time = time.time()
 
     msg = await message.reply_text(
-        f"""
+f"""
 ╔════════════════════╗
   🔍 SEARCHING VIDEO 🔍
 ╚════════════════════╝
@@ -959,7 +1026,11 @@ async def video(client, message: Message):
 
         if not results:
             return await msg.edit_text(
-                "❌ VIDEO NOT FOUND"
+"""
+╔════════════════════╗
+      ❌ NOT FOUND
+╚════════════════════╝
+"""
             )
 
         song = results[0]
@@ -978,30 +1049,11 @@ async def video(client, message: Message):
 
             if d['status'] == 'downloading':
 
-                downloaded = d.get(
-                    '_downloaded_bytes_str',
-                    '0MB'
-                )
-
-                total = d.get(
-                    '_total_bytes_str',
-                    'Unknown'
-                )
-
-                speed = d.get(
-                    '_speed_str',
-                    '0MB/s'
-                )
-
-                percent = d.get(
-                    '_percent_str',
-                    '0%'
-                )
-
-                eta = d.get(
-                    '_eta_str',
-                    '0s'
-                )
+                downloaded = d.get('_downloaded_bytes_str', '0MB')
+                total = d.get('_total_bytes_str', 'Unknown')
+                speed = d.get('_speed_str', '0MB/s')
+                percent = d.get('_percent_str', '0%')
+                eta = d.get('_eta_str', '0s')
 
                 ping = round(
                     (time.time() - start_time) * 1000
@@ -1046,9 +1098,6 @@ async def video(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-➜ 〝 𝐇𝐞𝐚𝐕𝐞𝐧 〞
 """
                     ),
                     app.loop
@@ -1064,6 +1113,7 @@ async def video(client, message: Message):
 
             "quiet": True,
             "noplaylist": True,
+
             "geo_bypass": True,
             "nocheckcertificate": True,
 
@@ -1084,17 +1134,6 @@ async def video(client, message: Message):
             "progress_hooks": [progress_hook]
         }
 
-        await msg.edit_text(
-            """
-╔════════════════════╗
-    📥 DOWNLOADING 📥
-╚════════════════════╝
-
-⚡ STATUS:
-➜ FETCHING VIDEO...
-"""
-        )
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
 
             info = ydl.extract_info(
@@ -1102,28 +1141,7 @@ async def video(client, message: Message):
                 download=True
             )
 
-            if not info:
-                return await msg.edit_text(
-                    "❌ VIDEO DOWNLOAD FAILED"
-                )
-
             file_path = ydl.prepare_filename(info)
-
-        if not os.path.exists(file_path):
-            return await msg.edit_text(
-                "❌ VIDEO DOWNLOAD FAILED"
-            )
-
-        await msg.edit_text(
-            """
-╔════════════════════╗
-  📤 UPLOADING VIDEO 📤
-╚════════════════════╝
-
-⚡ STATUS:
-➜ SENDING VIDEO...
-"""
-        )
 
         await message.reply_video(
             video=file_path,
@@ -1149,9 +1167,6 @@ async def video(client, message: Message):
 
 👑 OWNER:
 ➜ @BeStChEaT_OwNeR
-
-💎 POWERED BY:
-⌬ Ｉｍ ➛ 🜲 𝐅𝐚𝐓𝐡𝐞𝐑 𝐊𝐚𝐑𝐭𝐢𝐊 🜲
 """
         )
 
@@ -1164,12 +1179,16 @@ async def video(client, message: Message):
 
     except Exception as e:
 
-        print(e)
-
         await msg.edit_text(
-            f"❌ DOWNLOAD FAILED\n\n{e}"
+f"""
+╔════════════════════╗
+       ❌ ERROR
+╚════════════════════╝
+
+{str(e)[:300]}
+"""
         )
-            
+
 # =========================
 # RUN
 # =========================
