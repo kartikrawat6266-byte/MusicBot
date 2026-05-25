@@ -344,17 +344,17 @@ async def owner_panel(client, query: CallbackQuery):
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "👥 Users",
+                "🍓 Users",
                 callback_data="users"
             )
         ],
         [
             InlineKeyboardButton(
-                "🚫 Ban",
+                "🍂 Ban",
                 callback_data="ban_info"
             ),
             InlineKeyboardButton(
-                "✅ Unban",
+                "❄️ Unban",
                 callback_data="unban_info"
             )
         ],
@@ -388,12 +388,12 @@ async def users(client, query: CallbackQuery):
 
     users = load_users()
 
-    text = "👥 USER HISTORY\n\n"
+    text = "🍫 Users History\n\n"
 
     if not users:
         text += """
 ╔════════════════════╗
-      ❌ NO USERS
+ ❌ NO USERS JOINED YET ❌
 ╚════════════════════╝
 """
 
@@ -406,19 +406,19 @@ async def users(client, query: CallbackQuery):
 
         text += f"""
 
-👤 NAME:
+🥶 NAME:
 {data['name']}
 
-🔗 USERNAME:
+💎 USERNAME:
 {username}
 
-🆔 ID:
+🍰 ID:
 {user_id}
 
 📅 JOIN TIME:
 {data['join_time']}
 
-🟢 LAST ACTIVE:
+👙 LAST ACTIVE:
 {data['last_active']}
 
 ━━━━━━━━━━━━━━━━━━━
@@ -427,7 +427,7 @@ async def users(client, query: CallbackQuery):
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "⬅️ Back",
+                "🍓 Back",
                 callback_data="owner_panel"
             )
         ]
@@ -455,7 +455,7 @@ async def banned_history(client, query: CallbackQuery):
     if not banned:
         text += """
 ╔════════════════════╗
-   ✅ NO BANNED USERS
+ 🍁 NO BANNED USERS YET 🌸
 ╚════════════════════╝
 """
 
@@ -473,16 +473,16 @@ async def banned_history(client, query: CallbackQuery):
 
         text += f"""
 
-👤 Telegram Name :
+🍓 Telegram Name :
 {user_data.get('name', 'Unknown')}
 
-🆔 Telegram ID :
+🥶 Telegram ID :
 {user_id}
 
-🔗 TG Username :
+👑 TG Username :
 {username}
 
-🚫 Ban Time :
+💥 Ban Time :
 {data.get('time', 'Unknown')}
 
 ━━━━━━━━━━━━━━━━━━━
@@ -491,7 +491,7 @@ async def banned_history(client, query: CallbackQuery):
     buttons = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "⬅️ Back",
+                "🍫 Back",
                 callback_data="owner_panel"
             )
         ]
@@ -510,7 +510,7 @@ async def banned_history(client, query: CallbackQuery):
 async def ban_info(client, query: CallbackQuery):
 
     await query.answer(
-        "🚫 Send /ban user_id",
+        "🍓 Send /ban user_id",
         show_alert=True
     )
 
@@ -522,7 +522,7 @@ async def ban_info(client, query: CallbackQuery):
 async def unban_info(client, query: CallbackQuery):
 
     await query.answer(
-        "✅ Send /unban user_id",
+        "🏞️ Send /unban user_id",
         show_alert=True
     )
 
@@ -540,10 +540,10 @@ async def ban(client, message: Message):
         return await message.reply_text(
 """
 ╔════════════════════╗
-     ❌ INVALID FORMAT
+   🍓 INVALID FORMAT 🍓
 ╚════════════════════╝
 
-✅ USE THIS FORMAT:
+🥶 USE THIS FORMAT:
 
 ➜ /ban user_id
 """
@@ -555,10 +555,10 @@ async def ban(client, message: Message):
         return await message.reply_text(
 """
 ╔════════════════════╗
-   ❌ OWNER CANNOT BAN
+  🍫 OWNER CANNOT BAN 🍓
 ╚════════════════════╝
 
-👑 OWNER PROTECTION ENABLED
+🍑 FATHER PROTECTION ENABLED
 """
         )
 
@@ -573,7 +573,7 @@ async def ban(client, message: Message):
     await message.reply_text(
 """
 ╔════════════════════╗
-    🚫 USER BANNED
+    🍑 USER BANNED 👙
 ╚════════════════════╝
 """
     )
@@ -583,10 +583,10 @@ async def ban(client, message: Message):
             user_id,
 f"""
 ╔════════════════════╗
-      🚫 YOU ARE BANNED
+   🥹 YOU ARE BANNED 🍓
 ╚════════════════════╝
 
-❌ YOUR ACCESS TO THIS
+🍂 YOUR ACCESS TO THIS
 BOT HAS BEEN SUSPENDED
 
 ━━━━━━━━━━━━━━━━━━━
@@ -599,7 +599,7 @@ BOT HAS BEEN SUSPENDED
 
 ━━━━━━━━━━━━━━━━━━━
 
-👑 OWNER :
+🌸 OWNER :
 @BeStChEaT_OwNeR
 
 📞 SUPPORT :
@@ -623,10 +623,10 @@ async def unban(client, message: Message):
         return await message.reply_text(
 """
 ╔════════════════════╗
-     ❌ INVALID FORMAT
+  🍓 INVALID FORMAT 🍑
 ╚════════════════════╝
 
-✅ USE THIS FORMAT:
+🍂 USE THIS FORMAT:
 
 ➜ /unban user_id
 """
@@ -644,7 +644,7 @@ async def unban(client, message: Message):
     await message.reply_text(
 """
 ╔════════════════════╗
-   ✅ USER UNBANNED
+   🍑 USER UNBANNED 🍓
 ╚════════════════════╝
 """
     )
@@ -654,10 +654,10 @@ async def unban(client, message: Message):
             user_id,
 f"""
 ╔════════════════════╗
-    ✅ ACCESS RESTORED
+  🧞 ACCESS RESTORED 🧚🏻
 ╚════════════════════╝
 
-🎉 YOUR ACCESS HAS
+🍓 YOUR ACCESS HAS
 BEEN RESTORED
 
 ━━━━━━━━━━━━━━━━━━━
@@ -670,7 +670,7 @@ BEEN RESTORED
 
 ━━━━━━━━━━━━━━━━━━━
 
-👑 OWNER :
+🫅🏻 OWNER :
 @BeStChEaT_OwNeR
 
 📞 SUPPORT :
@@ -694,10 +694,10 @@ async def play(client, message: Message):
         return await message.reply_text(
 """
 ╔════════════════════╗
-     ❌ INVALID FORMAT
+  🍓 INVALID FORMAT 🍑
 ╚════════════════════╝
 
-✅ EXAMPLE:
+🥶 EXAMPLE:
 
 ➜ /audio Golden Brown
 """
@@ -710,7 +710,7 @@ async def play(client, message: Message):
     msg = await message.reply_text(
 f"""
 ╔════════════════════╗
-  🔍 SEARCHING AUDIO 🔍
+  🔍 SEARCHING AUDIO 🍓
 ╚════════════════════╝
 
 🎵 SONG:
@@ -732,7 +732,7 @@ f"""
             return await msg.edit_text(
 """
 ╔════════════════════╗
-      ❌ NOT FOUND
+     👙 NOT FOUND 🍑
 ╚════════════════════╝
 """
             )
@@ -905,7 +905,7 @@ f"""
             return await msg.edit_text(
 """
 ╔════════════════════╗
-  ❌ DOWNLOAD FAILED
+  🍑 DOWNLOAD FAILED 🍓
 ╚════════════════════╝
 """
             )
@@ -969,7 +969,7 @@ f"""
         await msg.edit_text(
 f"""
 ╔════════════════════╗
-       ❌ ERROR
+       🍑 ERROR 👙
 ╚════════════════════╝
 
 {str(e)[:300]}
@@ -990,10 +990,10 @@ async def video(client, message: Message):
         return await message.reply_text(
 """
 ╔════════════════════╗
-     ❌ INVALID FORMAT
+  🍓 INVALID FORMAT 🥶
 ╚════════════════════╝
 
-✅ EXAMPLE:
+🧚🏻 EXAMPLE:
 
 ➜ /video Faded
 """
@@ -1028,7 +1028,7 @@ f"""
             return await msg.edit_text(
 """
 ╔════════════════════╗
-      ❌ NOT FOUND
+      🍓 NOT FOUND 🌸
 ╚════════════════════╝
 """
             )
@@ -1182,7 +1182,7 @@ f"""
         await msg.edit_text(
 f"""
 ╔════════════════════╗
-       ❌ ERROR
+       🥶 ERROR 🧞
 ╚════════════════════╝
 
 {str(e)[:300]}
@@ -1193,6 +1193,6 @@ f"""
 # RUN
 # =========================
 
-print("✅ Premium Music Bot Running")
+print("🍓 Premium Music Bot Is Running On Railway 🚂")
 
 app.run()
